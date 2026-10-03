@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backend Developer | NeNoX Forge Role Details</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Lightweight, consistent hover animation for the three role action buttons. */
+    .role-action-button {
+      transform: translate3d(0, 0, 0) scale(1);
+      transform-origin: center;
+      transition:
+        transform 0.23s cubic-bezier(0.2, 0.75, 0.25, 1),
+        box-shadow 0.23s ease,
+        background-color 0.23s ease,
+        border-color 0.23s ease,
+        color 0.23s ease;
+      backface-visibility: hidden;
+    }
+
+    .role-action-button:hover {
+      transform: translate3d(0, -2px, 0) scale(1.025);
+    }
+
+    .role-action-button:active {
+      transform: translate3d(0, 0, 0) scale(0.985);
+      transition-duration: 0.12s;
+    }
+
+    .role-action-button:focus-visible {
+      outline: 2px solid rgba(248, 113, 113, 0.9);
+      outline-offset: 3px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .role-action-button {
+        transition: none;
+      }
+      .role-action-button:hover,
+      .role-action-button:active {
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body class="bg-black text-slate-100 font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-red-600 selection:text-white">
+
+  <!-- NAVBAR -->
+  <nav class="sticky top-0 z-50 backdrop-blur-md bg-black/80 border-b border-red-900/40">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="index.html" class="flex items-center space-x-3">
+        <video src="logo.mp4" autoplay loop muted playsinline class="h-10 w-10 rounded-full border border-red-600/60 object-cover"></video>
+        <span class="font-bold text-xl tracking-wider text-white">NeNoX Forge</span>
+      </a>
+      <a href="index.html" class="text-sm font-semibold text-slate-400 hover:text-white transition-colors">
+        <i class="fa-solid fa-arrow-left mr-2"></i>Back to Home
+      </a>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="max-w-4xl mx-auto px-6 py-16 flex-grow">
+    <div class="bg-red-950/20 border border-red-900/40 rounded-3xl p-8 sm:p-12 backdrop-blur-sm shadow-2xl">
+
+      <div class="flex items-center space-x-4 mb-6">
+        <div class="w-16 h-16 rounded-2xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-3xl">
+          <i class="fa-solid fa-server"></i>
+        </div>
+
+        <div>
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-white">
+            Backend Developer
+          </h1>
+
+          <p class="text-red-400 font-semibold text-sm">
+            Role 03 • Server Architecture & AI
+          </p>
+        </div>
+      </div>
+
+      <div class="space-y-8 text-slate-300">
+
+        <!-- PROFESSIONAL TOOLKIT -->
+        <div>
+          <p class="text-sm leading-relaxed">
+            <span class="text-red-500 font-bold">
+              Professional toolkit:
+            </span>
+            Python (FastAPI), Node.js, PostgreSQL, MongoDB, Redis, LLM Integration
+          </p>
+        </div>
+
+        <!-- ROLE DESCRIPTION -->
+        <div>
+
+          <p class="text-sm leading-relaxed">
+            Backend development provides the services, data operations, and system
+            logic that make a product functional beyond its visible interface.
+            The developer designs architecture, defines service boundaries,
+            creates APIs, manages authentication and authorization, implements
+            business rules, validates data, and ensures information is stored
+            accurately.
+          </p>
+
+          <p class="text-sm leading-relaxed mt-2">
+            The role must consider reliability under load, graceful errors,
+            observability, database performance, secure secrets, and long-term
+            maintainability.
+          </p>
+
+          <p class="text-sm leading-relaxed mt-2">
+            Backend engineers translate requirements into dependable workflows
+            and work closely with frontend and security teams to establish clear
+            contracts.
+          </p>
+
+          <p class="text-sm leading-relaxed mt-2">
+            They also prepare deployment, monitoring, testing, backups, and
+            scaling foundations. Strong backend engineering builds trustworthy
+            services that protect data, respond consistently, and support future
+            growth.
+          </p>
+
+        </div>
+
+        <!-- TOOLS AND KEY CAPABILITIES -->
+        <div>
+
+          <h2 class="text-xl font-bold text-red-500 mb-2">
+            Tools and key capabilities
+          </h2>
+
+          <ul class="list-disc list-inside space-y-2 text-sm leading-relaxed text-slate-300">
+
+            <li>
+              Python with FastAPI — creates typed, high-performance APIs with
+              validation and automatic documentation.
+            </li>
+
+            <li>
+              Node.js — supports event-driven services, real-time features and
+              JavaScript or TypeScript ecosystems.
+            </li>
+
+            <li>
+              PostgreSQL — provides relational modeling, transactions,
+              constraints and strong consistency for business data.
+            </li>
+
+            <li>
+              MongoDB — supports document-oriented storage for flexible or
+              rapidly changing data models.
+            </li>
+
+            <li>
+              Redis — handles caching, sessions, queues, rate limiting, locks
+              and other low-latency operations.
+            </li>
+
+            <li>
+              LLM integration — enables assistants, retrieval, summarization
+              and classification with validation and privacy controls.
+            </li>
+
+            <li>
+              Docker and CI/CD — package services consistently and automate
+              testing, builds and deployments.
+            </li>
+
+            <li>
+              Logging, metrics and tracing — provide observability for diagnosing
+              failures and measuring service health.
+            </li>
+
+          </ul>
+
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="pt-6 border-t border-red-900/40 flex flex-col sm:flex-row gap-4">
+
+          <!-- APPLY BUTTON -->
+          <a href="https://docs.google.com/forms/d/e/1FAIpQLSfmnMVp0bzTQPwQx21giPovY9UxyBOXO3R5dkxs4ajmG5xOhg/viewform?usp=header"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="role-action-button flex-1 inline-flex items-center justify-center py-3.5 px-6 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition-all shadow-lg shadow-red-600/30">
+            <span>Apply for this Role</span>
+            <i class="fa-solid fa-paper-plane ml-2"></i>
+          </a>
+
+          <!-- TEAM DETAILS PDF BUTTON -->
+          <a href="NeNoX team Detail.pdf"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="role-action-button inline-flex items-center justify-center py-3.5 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 border border-red-900/60 text-red-400 hover:text-white font-semibold transition-all">
+            <i class="fa-solid fa-file-pdf mr-2"></i>
+            <span>Team Details</span>
+          </a>
+
+          <!-- VIEW OTHER ROLES BUTTON -->
+          <a href="index.html#roles"
+             class="role-action-button inline-flex items-center justify-center py-3.5 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-semibold transition-all">
+            View Other Roles
+          </a>
+
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-red-900/30 bg-black/80 py-6 text-center text-slate-500 text-sm">
+    © 2026 Team NeNoX Forge • Built for University Hackathons
+  </footer>
+</body>
+</html>

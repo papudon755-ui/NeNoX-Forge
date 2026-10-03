@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Research & PM | NeNoX Forge Role Details</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Smooth, lightweight hover animation for the three role action buttons. */
+    .role-action-button {
+      transform: translate3d(0, 0, 0) scale(1);
+      transform-origin: center;
+      transition:
+        transform 0.23s cubic-bezier(0.2, 0.75, 0.25, 1),
+        box-shadow 0.23s ease,
+        background-color 0.23s ease,
+        border-color 0.23s ease,
+        color 0.23s ease;
+      backface-visibility: hidden;
+    }
+
+    .role-action-button:hover {
+      transform: translate3d(0, -2px, 0) scale(1.025);
+    }
+
+    .role-action-button:active {
+      transform: translate3d(0, 0, 0) scale(0.985);
+      transition-duration: 0.12s;
+    }
+
+    .role-action-button:focus-visible {
+      outline: 2px solid rgba(248, 113, 113, 0.9);
+      outline-offset: 3px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .role-action-button {
+        transition: none;
+      }
+      .role-action-button:hover,
+      .role-action-button:active {
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body class="bg-black text-slate-100 font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-red-600 selection:text-white">
+
+  <!-- NAVBAR -->
+  <nav class="sticky top-0 z-50 backdrop-blur-md bg-black/80 border-b border-red-900/40">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="index.html" class="flex items-center space-x-3">
+        <video src="logo.mp4" autoplay loop muted playsinline class="h-10 w-10 rounded-full border border-red-600/60 object-cover"></video>
+        <span class="font-bold text-xl tracking-wider text-white">NeNoX Forge</span>
+      </a>
+      <a href="index.html" class="text-sm font-semibold text-slate-400 hover:text-white transition-colors">
+        <i class="fa-solid fa-arrow-left mr-2"></i>Back to Home
+      </a>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="max-w-4xl mx-auto px-6 py-16 flex-grow">
+    <div class="bg-red-950/20 border border-red-900/40 rounded-3xl p-8 sm:p-12 backdrop-blur-sm shadow-2xl">
+
+      <!-- ROLE HEADER -->
+      <div class="flex items-center space-x-4 mb-6">
+        <div class="w-16 h-16 rounded-2xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-3xl">
+          <i class="fa-solid fa-diagram-project"></i>
+        </div>
+
+        <div>
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-white">
+            Research, Strategy & PM
+          </h1>
+
+          <p class="text-red-400 font-semibold text-sm">
+            Role 04 • Operations & Pitch Strategy
+          </p>
+        </div>
+      </div>
+
+      <div class="space-y-8 text-slate-300">
+
+        <!-- PROFESSIONAL TOOLKIT -->
+        <div>
+          <p class="text-sm leading-relaxed">
+            <span class="text-red-500 font-bold">
+              Professional toolkit:
+            </span>
+            Agile, Problem Framing, Market Research, Pitch Strategy, Notion, Jira
+          </p>
+        </div>
+
+        <!-- ROLE DESCRIPTION -->
+        <div>
+          <p class="text-sm leading-relaxed">
+            Research, strategy, and product management connect user needs, market
+            evidence, technical execution, and measurable outcomes. The role
+            validates the problem, identifies the most important user segment,
+            studies competitors and substitutes, and converts findings into a
+            focused product opportunity.
+          </p>
+
+          <p class="text-sm leading-relaxed mt-2">
+            Product management turns that opportunity into priorities,
+            requirements, acceptance criteria, milestones, and a realistic MVP.
+            During execution, this role maintains alignment, manages sprint
+            timelines, clarifies trade-offs, coordinates dependencies, and removes
+            blockers.
+          </p>
+
+          <p class="text-sm leading-relaxed mt-2">
+            During a pitch, the strategy lead explains why the problem matters,
+            why the solution is differentiated, how it can be delivered
+            responsibly, and what evidence will define success.
+          </p>
+
+          <p class="text-sm leading-relaxed mt-2">
+            The role combines curiosity, structured thinking, communication,
+            prioritization, and disciplined follow-through.
+          </p>
+        </div>
+
+        <!-- TOOLS AND KEY CAPABILITIES -->
+        <div>
+          <h2 class="text-xl font-bold text-red-500 mb-2">
+            Tools and key capabilities
+          </h2>
+
+          <ul class="list-disc list-inside space-y-2 text-sm leading-relaxed text-slate-300">
+
+            <li>
+              Agile — supports short feedback cycles, iterative delivery,
+              transparent priorities and retrospectives.
+            </li>
+
+            <li>
+              Problem framing — separates symptoms from root causes and defines
+              the affected user and opportunity.
+            </li>
+
+            <li>
+              Market research — combines interviews, surveys, desk research,
+              competitor analysis and experiments.
+            </li>
+
+            <li>
+              Notion — organizes research notes, product decisions,
+              documentation and shared team knowledge.
+            </li>
+
+            <li>
+              Jira — structures epics, user stories, tasks, sprint planning,
+              dependencies and delivery tracking.
+            </li>
+
+            <li>
+              Pitch strategy — creates a clear narrative covering problem,
+              audience, solution, differentiation and impact.
+            </li>
+
+            <li>
+              Roadmapping — communicates sequencing, milestones, assumptions
+              and expected outcomes.
+            </li>
+
+            <li>
+              Product metrics — measure adoption, retention, task success,
+              quality, risk and progress toward goals.
+            </li>
+
+          </ul>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="pt-6 border-t border-red-900/40 flex flex-col sm:flex-row gap-4">
+
+          <!-- APPLY BUTTON -->
+          <a href="https://docs.google.com/forms/d/e/1FAIpQLSfmnMVp0bzTQPwQx21giPovY9UxyBOXO3R5dkxs4ajmG5xOhg/viewform?usp=header"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="role-action-button flex-1 inline-flex items-center justify-center py-3.5 px-6 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition-all shadow-lg shadow-red-600/30">
+            <span>Apply for this Role</span>
+            <i class="fa-solid fa-paper-plane ml-2"></i>
+          </a>
+
+          <!-- TEAM DETAILS PDF BUTTON -->
+          <a href="NeNoX team Detail.pdf"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="role-action-button inline-flex items-center justify-center py-3.5 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 border border-red-900/60 text-red-400 hover:text-white font-semibold transition-all">
+            <i class="fa-solid fa-file-pdf mr-2"></i>
+            <span>Team Details</span>
+          </a>
+
+          <!-- VIEW OTHER ROLES BUTTON -->
+          <a href="index.html#roles"
+             class="role-action-button inline-flex items-center justify-center py-3.5 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-semibold transition-all">
+            View Other Roles
+          </a>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-red-900/30 bg-black/80 py-6 text-center text-slate-500 text-sm">
+    © 2026 Team NeNoX Forge • Built for University Hackathons
+  </footer>
+</body>
+</html>

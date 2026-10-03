@@ -1,0 +1,16 @@
+{
+  "name": "hackathon-system",
+  "version": "1.0.0",
+  "description": "NeNoX Forge Telegram hackathon manager",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0"
+  }
+}
