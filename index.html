@@ -375,16 +375,15 @@ Here's the deal: When you hit a wall or face a tough technical challenge, we've 
 </script>
 
 <script>
-/* ---------- LOGO VIDEOS: instant start + perfect sync, no freezing ----------
-   All three logo spots (splash, navbar, hero) share ONE download of logo.mp4
-   (the <link rel="preload"> in <head> + browser HTTP cache). This script:
-   1. waits until every logo video can show its first frame,
-   2. resets them all to 0 and presses play in the same animation frame,
-   3. re-syncs any drift every 1.5s, and re-syncs after tab switches
-      (the classic cause of "freezes, then runs out of sync"). */
+/* ---------- LOGO VIDEOS: one master clock + continuous sync ----------
+   All logo videos use the same file, but separate <video> elements can slowly
+   drift because each element has its own playback clock/decoder. One logo is
+   the master clock; the others continuously follow it. This keeps them aligned
+   even after several minutes, including when the video loops. */
 document.addEventListener('DOMContentLoaded',()=>{
   const logos=[...document.querySelectorAll('video[data-logo]')];
   if(!logos.length)return;
+
   logos.forEach(v=>{
     v.muted=true;v.loop=true;v.playsInline=true;v.preload='auto';
     v.setAttribute('aria-hidden','true');
@@ -392,43 +391,89 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
 
   let started=false;
+  let syncing=false;
+  const master=logos[0];
+
+  const playAll=()=>logos.forEach(v=>{
+    if(v.readyState>=2)v.play().catch(()=>{});
+  });
+
   const startTogether=()=>{
     if(started)return;
-    if(!logos.every(v=>v.readyState>=2))return;  // HAVE_CURRENT_DATA on all
+    if(!logos.every(v=>v.readyState>=2))return;
     started=true;
     logos.forEach(v=>{try{v.currentTime=0;}catch(e){}});
-    requestAnimationFrame(()=>logos.forEach(v=>v.play().catch(()=>{})));
+    requestAnimationFrame(playAll);
   };
+
   logos.forEach(v=>{
     v.addEventListener('canplay',startTogether);
     v.addEventListener('loadeddata',startTogether);
-    v.addEventListener('error',()=>{started=true;});  // one broken file must not block the others
+    v.addEventListener('error',()=>{started=true;});
   });
-  setTimeout(()=>{                                       // safety net: never wait forever
+
+  setTimeout(()=>{
     if(started)return;
     started=true;
-    logos.forEach(v=>v.play().catch(()=>{}));
+    logos.forEach(v=>{try{v.currentTime=0;}catch(e){}});
+    playAll();
   },6000);
 
-  /* drift correction: if any logo is >0.25s off the reference, snap it back */
-  setInterval(()=>{
-    if(document.hidden||!started)return;
-    const ref=logos[0];
-    if(ref.paused||ref.readyState<2)return;
-    const t=ref.currentTime;
+  /* Keep every logo locked to the master's playback position.
+     A small tolerance avoids unnecessary seeks, while the frequent check
+     prevents the small drift that becomes visible after several minutes. */
+  const sync=()=>{
+    if(!started||document.hidden||syncing||master.readyState<2){
+      requestAnimationFrame(sync);
+      return;
+    }
+
+    const t=master.currentTime;
+    const masterPaused=master.paused;
+
+    syncing=true;
     logos.forEach(v=>{
-      if(v!==ref&&v.readyState>=2&&Math.abs(v.currentTime-t)>0.25){
+      if(v===master||v.readyState<2)return;
+
+      const drift=Math.abs(v.currentTime-t);
+      if(drift>0.08){
+        try{v.currentTime=t;}catch(e){}
+      }
+
+      if(masterPaused){
+        if(!v.paused)v.pause();
+      }else if(v.paused){
+        v.play().catch(()=>{});
+      }
+    });
+    syncing=false;
+
+    requestAnimationFrame(sync);
+  };
+  requestAnimationFrame(sync);
+
+  /* If one logo reaches a loop boundary slightly before another, immediately
+     force the others to the master's new position. */
+  master.addEventListener('timeupdate',()=>{
+    if(!started||document.hidden)return;
+    const t=master.currentTime;
+    logos.forEach(v=>{
+      if(v!==master&&v.readyState>=2&&Math.abs(v.currentTime-t)>0.08){
         try{v.currentTime=t;}catch(e){}
       }
     });
-  },1500);
+  });
 
-  /* tab switch: pause everything, resume in sync on return */
+  /* Tab switch: pause together, then resume from exactly the same timestamp. */
   document.addEventListener('visibilitychange',()=>{
-    if(document.hidden){logos.forEach(v=>v.pause());}
-    else if(started){
-      try{logos.forEach(v=>{if(v.readyState>=2)v.currentTime=logos[0].currentTime;});}catch(e){}
-      logos.forEach(v=>v.play().catch(()=>{}));
+    if(document.hidden){
+      logos.forEach(v=>v.pause());
+    }else if(started&&master.readyState>=2){
+      const t=master.currentTime;
+      logos.forEach(v=>{
+        try{v.currentTime=t;}catch(e){}
+      });
+      playAll();
     }
   });
 });
