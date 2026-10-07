@@ -11,41 +11,70 @@
 <style>
 #splash-screen{transition:opacity .35s ease,visibility .35s ease}
 
-/* scroll reveal (uses a data attribute so Tailwind does not re-scan on every reveal) */
-.reveal{opacity:0;transform:translate3d(0,24px,0);transition:opacity .6s ease,transform .6s cubic-bezier(.22,1,.36,1)}
-.reveal[data-in]{opacity:1;transform:none}
-
-/* zoom cards - same look, no lag */
+/* ===== SMOOTH ZOOM IN / ZOOM OUT =====
+   - zoom-IN starts the same instant the pointer arrives (fast-start curve, no delay)
+   - zoom-OUT eases back slowly and softly
+   - only transform + opacity are animated (GPU only, no repaint) */
 .zoom-card,.zoom-item{
 --z:1.05;
+--ease-in:cubic-bezier(.2,.9,.25,1);
+--ease-out:cubic-bezier(.33,1,.68,1);
 position:relative;
-/* translateZ(0) puts the card on its own GPU layer BEFORE hover, so the first frame does not stutter */
-transform:translateZ(0) scale(1);
-transition:transform .35s cubic-bezier(.22,1,.36,1),background-color .25s ease,color .25s ease
+transform:translate3d(0,0,0) scale(1);
+transform-origin:center center;
+transition:transform .6s var(--ease-out),background-color .25s ease,color .25s ease;
+will-change:transform;
+backface-visibility:hidden;
+-webkit-backface-visibility:hidden;
+-webkit-font-smoothing:antialiased;
+-webkit-tap-highlight-color:transparent;
+touch-action:manipulation
 }
 .zoom-item{--z:1.03}
 .zoom-lg{--z:1.025}
 
-/* glow ring: own pre-painted layer, only opacity is animated */
+/* glow ring: only opacity is animated */
 .zoom-card:after,.zoom-item:after{
 content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-opacity:0;will-change:opacity;transition:opacity .35s ease;
+opacity:0;will-change:opacity;transition:opacity .6s var(--ease-out);
 border:1px solid rgba(220,38,38,.8);box-shadow:0 10px 30px rgba(220,38,38,.3)
 }
 .zoom-item:after{border-color:rgba(185,28,28,.7);box-shadow:0 6px 18px rgba(220,38,38,.2)}
 
-/* no z-index change on hover (it forced a layer rebuild and caused a hitch) */
-.zoom-card:hover,.zoom-item:hover{transform:translateZ(0) scale(var(--z))}
-.zoom-card:hover:after,.zoom-item:hover:after{opacity:1}
+/* DESKTOP: hover */
+@media(hover:hover) and (pointer:fine){
+.zoom-card:hover,.zoom-item:hover{
+transform:translate3d(0,0,0) scale(var(--z));
+transition:transform .42s var(--ease-in),background-color .25s ease,color .25s ease
+}
+.zoom-card:hover:after,.zoom-item:hover:after{opacity:1;transition:opacity .35s ease-out}
+}
+
+/* MOBILE / TOUCH: card passing through the middle of the screen zooms in */
+@media(hover:none),(pointer:coarse){
+.zoom-card{--z:1.03}
+.zoom-item{--z:1.02}
+.zoom-lg{--z:1.012}
+.zoom-card.is-active,.zoom-item.is-active{
+transform:translate3d(0,0,0) scale(var(--z));
+transition:transform .5s var(--ease-in),background-color .25s ease,color .25s ease
+}
+.zoom-card.is-active:after,.zoom-item.is-active:after{opacity:1;transition:opacity .4s ease-out}
+}
+
+/* CLICK / TAP: reacts on the very first frame, then settles softly */
+.zoom-card:active,.zoom-item:active,.zoom-card.is-pressed,.zoom-item.is-pressed{
+transform:translate3d(0,0,0) scale(var(--z));
+transition:transform .16s var(--ease-in),background-color .25s ease,color .25s ease
+}
+.zoom-card:active:after,.zoom-item:active:after,.zoom-card.is-pressed:after,.zoom-item.is-pressed:after{
+opacity:1;transition:opacity .16s ease-out
+}
+
 .zoom-card:focus-visible{outline:2px solid rgba(248,113,113,.9);outline-offset:3px}
 
-@media(hover:none),(pointer:coarse){
-.zoom-card:hover,.zoom-item:hover{transform:translateZ(0)}
-.zoom-card:hover:after,.zoom-item:hover:after{opacity:0}
-}
 @media(prefers-reduced-motion:reduce){
 *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
-.reveal{opacity:1;transform:none}
 }
 </style>
 </head>
@@ -174,7 +203,7 @@ Detailed breakdown of specialized roles for our hackathon lineup
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-<div class="reveal h-full" style="transition-delay:.1s">
+<div class="h-full">
 
 <div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between group">
 
@@ -207,7 +236,7 @@ View Role Details
 </div>
 </div>
 
-<div class="reveal h-full" style="transition-delay:.2s">
+<div class="h-full">
 
 <div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between group">
 
@@ -240,7 +269,7 @@ View Role Details
 </div>
 </div>
 
-<div class="reveal h-full" style="transition-delay:.3s">
+<div class="h-full">
 
 <div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between group">
 
@@ -273,7 +302,7 @@ View Role Details
 </div>
 </div>
 
-<div class="reveal h-full" style="transition-delay:.4s">
+<div class="h-full">
 
 <div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between group">
 
@@ -306,7 +335,7 @@ View Role Details
 </div>
 </div>
 
-<div class="reveal h-full" style="transition-delay:.5s">
+<div class="h-full">
 
 <div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between group">
 
@@ -356,7 +385,7 @@ Forge Activity
 
 <!-- RECENT PROJECTS -->
 
-<div class="reveal h-fit" style="transition-delay:.1s">
+<div class="h-fit">
 
 <div class="zoom-card zoom-lg bg-red-950/30 p-6 sm:p-7 rounded-2xl border border-red-900/40 flex flex-col">
 
@@ -448,7 +477,7 @@ In Dev
 
 <!-- RECENT UPDATES -->
 
-<div class="reveal h-fit" style="transition-delay:.2s">
+<div class="h-fit">
 
 <div class="zoom-card zoom-lg bg-red-950/30 p-6 sm:p-7 rounded-2xl border border-red-900/40 flex flex-col">
 
@@ -615,25 +644,6 @@ isPlaying=!isPlaying;
 
 musicBtn.addEventListener('click',toggleMusic);
 
-const revealObs=new IntersectionObserver(
-
-entries=>entries.forEach(e=>{
-
-if(e.isIntersecting){
-
-e.target.setAttribute('data-in','');
-revealObs.unobserve(e.target);
-
-}
-
-}),
-
-{threshold:.12}
-
-);
-
-document.querySelectorAll('.reveal').forEach(el=>revealObs.observe(el));
-
 const videoObs=new IntersectionObserver(
 
 entries=>entries.forEach(e=>{
@@ -649,9 +659,138 @@ e.target.pause();
 
 );
 
-document.querySelectorAll('video').forEach(v=>videoObs.observe(v));
+/* logo videos are NOT paused on scroll, so they always stay in sync */
+document.querySelectorAll('video:not([src="logo.mp4"])').forEach(v=>videoObs.observe(v));
 
 });
+
+</script>
+
+<!-- ZOOM: mobile auto-zoom + instant click/tap animation -->
+
+<script>
+
+(function(){
+
+const SEL='.zoom-card,.zoom-item';
+
+/* MOBILE: card passing through the middle of the screen zooms in */
+const isTouch=window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
+if(isTouch){
+
+const zoomObs=new IntersectionObserver(
+
+entries=>entries.forEach(e=>e.target.classList.toggle('is-active',e.isIntersecting)),
+
+{rootMargin:'-40% 0px -40% 0px',threshold:0}
+
+);
+
+window.registerZoom=function(){
+
+document.querySelectorAll(SEL).forEach(el=>{
+
+if(el.dataset.zoomReg)return;
+
+el.dataset.zoomReg='1';
+zoomObs.observe(el);
+
+});
+
+};
+
+document.addEventListener('DOMContentLoaded',window.registerZoom);
+
+}
+
+/* CLICK / TAP: animation starts the moment the finger or mouse goes down */
+function clearPressed(){
+
+document.querySelectorAll('.is-pressed').forEach(el=>el.classList.remove('is-pressed'));
+
+}
+
+document.addEventListener('pointerdown',e=>{
+
+const el=e.target.closest&&e.target.closest(SEL);
+
+if(el)el.classList.add('is-pressed');
+
+},{passive:true});
+
+['pointerup','pointercancel','pointerleave','dragstart'].forEach(ev=>{
+
+document.addEventListener(ev,clearPressed,{passive:true});
+
+});
+
+window.addEventListener('blur',clearPressed);
+
+})();
+
+</script>
+
+<!-- LOGO VIDEO SYNC: splash, navbar and hero logo.mp4 always play at the exact same time -->
+
+<script>
+
+(function(){
+
+const master=document.querySelector('nav video[src="logo.mp4"]');
+
+if(!master)return;
+
+const vids=Array.from(document.querySelectorAll('video[src="logo.mp4"]'));
+
+function ready(v){
+
+return v.readyState>=2?Promise.resolve():new Promise(res=>{
+
+v.addEventListener('loadeddata',res,{once:true});
+
+});
+
+}
+
+/* start every logo video together from frame 0 */
+Promise.race([
+Promise.all(vids.map(ready)),
+new Promise(res=>setTimeout(res,2500))
+]).then(()=>{
+
+vids.forEach(v=>{
+
+try{v.currentTime=0;}catch(e){}
+
+v.play().catch(()=>{});
+
+});
+
+/* keep them locked to the navbar video (fixes any drift) */
+setInterval(()=>{
+
+const t=master.currentTime;
+
+vids.forEach(v=>{
+
+if(v===master||!v.isConnected)return;
+
+if(v.paused)v.play().catch(()=>{});
+
+if(Math.abs(v.currentTime-t)>0.04){
+
+try{v.currentTime=t;}catch(e){}
+
+}
+
+});
+
+},150);
+
+});
+
+})();
 
 </script>
 
@@ -793,6 +932,11 @@ target.appendChild(card);
 console.error('Unable to load hackathons:',error);
 
 target.textContent='Live updates are currently unavailable. Please check back shortly.';
+
+}finally{
+
+/* let the newly added cards zoom on mobile too */
+if(window.registerZoom)window.registerZoom();
 
 }
 
