@@ -5,70 +5,71 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NeNoX Forge | Hackathon Team Recruitment</title>
 
+<!-- connect early so the server/CDNs are ready before they're needed -->
+<link rel="preconnect" href="https://nenox-forge-backend.onrender.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
-#splash-screen{transition:opacity .35s ease,visibility .35s ease}
+#splash-screen{transition:opacity .3s ease,visibility .3s ease}
 
-/* ===== SMOOTH ZOOM IN / ZOOM OUT =====
-   - zoom-IN starts the same instant the pointer arrives (fast-start curve, no delay)
-   - zoom-OUT eases back slowly and softly
-   - only transform + opacity are animated (GPU only, no repaint) */
+/* ===== FAST + SMOOTH ZOOM (only transform + opacity, GPU only) ===== */
 .zoom-card,.zoom-item{
 --z:1.05;
---ease-in:cubic-bezier(.2,.9,.25,1);
---ease-out:cubic-bezier(.33,1,.68,1);
+--ease-in:cubic-bezier(.25,.8,.25,1);
+--ease-out:cubic-bezier(.22,.9,.3,1);
 position:relative;
 transform:translate3d(0,0,0) scale(1);
 transform-origin:center center;
-transition:transform .6s var(--ease-out),background-color .25s ease,color .25s ease;
+transition:transform .45s var(--ease-out),background-color .2s ease,color .2s ease;
 will-change:transform;
 backface-visibility:hidden;
 -webkit-backface-visibility:hidden;
--webkit-font-smoothing:antialiased;
 -webkit-tap-highlight-color:transparent;
 touch-action:manipulation
 }
 .zoom-item{--z:1.03}
 .zoom-lg{--z:1.025}
 
-/* glow ring: only opacity is animated */
+/* glow ring: only opacity animates, small shadow = cheap to draw */
 .zoom-card:after,.zoom-item:after{
 content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-opacity:0;will-change:opacity;transition:opacity .6s var(--ease-out);
-border:1px solid rgba(220,38,38,.8);box-shadow:0 10px 30px rgba(220,38,38,.3)
+opacity:0;transition:opacity .4s ease-out;
+border:1px solid rgba(220,38,38,.8);box-shadow:0 6px 18px rgba(220,38,38,.28)
 }
-.zoom-item:after{border-color:rgba(185,28,28,.7);box-shadow:0 6px 18px rgba(220,38,38,.2)}
+.zoom-item:after{border-color:rgba(185,28,28,.7);box-shadow:0 4px 12px rgba(220,38,38,.2)}
 
-/* DESKTOP: hover */
+/* DESKTOP hover: zoom-in is quick, zoom-out is a little softer */
 @media(hover:hover) and (pointer:fine){
 .zoom-card:hover,.zoom-item:hover{
 transform:translate3d(0,0,0) scale(var(--z));
-transition:transform .42s var(--ease-in),background-color .25s ease,color .25s ease
+transition:transform .38s var(--ease-in),background-color .2s ease,color .2s ease
 }
-.zoom-card:hover:after,.zoom-item:hover:after{opacity:1;transition:opacity .35s ease-out}
+.zoom-card:hover:after,.zoom-item:hover:after{opacity:1;transition:opacity .3s ease-out}
 }
 
-/* MOBILE / TOUCH: card passing through the middle of the screen zooms in */
+/* MOBILE: card in the middle of the screen zooms in */
 @media(hover:none),(pointer:coarse){
 .zoom-card{--z:1.03}
 .zoom-item{--z:1.02}
 .zoom-lg{--z:1.012}
 .zoom-card.is-active,.zoom-item.is-active{
 transform:translate3d(0,0,0) scale(var(--z));
-transition:transform .5s var(--ease-in),background-color .25s ease,color .25s ease
+transition:transform .45s var(--ease-in),background-color .2s ease,color .2s ease
 }
-.zoom-card.is-active:after,.zoom-item.is-active:after{opacity:1;transition:opacity .4s ease-out}
+.zoom-card.is-active:after,.zoom-item.is-active:after{opacity:1;transition:opacity .35s ease-out}
 }
 
-/* CLICK / TAP: reacts on the very first frame, then settles softly */
+/* CLICK / TAP: reacts on the first frame */
 .zoom-card:active,.zoom-item:active,.zoom-card.is-pressed,.zoom-item.is-pressed{
 transform:translate3d(0,0,0) scale(var(--z));
-transition:transform .16s var(--ease-in),background-color .25s ease,color .25s ease
+transition:transform .15s var(--ease-in),background-color .2s ease,color .2s ease
 }
 .zoom-card:active:after,.zoom-item:active:after,.zoom-card.is-pressed:after,.zoom-item.is-pressed:after{
-opacity:1;transition:opacity .16s ease-out
+opacity:1;transition:opacity .15s ease-out
 }
 
 .zoom-card:focus-visible{outline:2px solid rgba(248,113,113,.9);outline-offset:3px}
@@ -92,23 +93,20 @@ opacity:1;transition:opacity .16s ease-out
 
 <nav class="sticky top-0 z-50 bg-black/95 border-b border-red-900/40">
 <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-
-<a href="intro.html" class="flex items-center space-x-3">
-<video src="logo.mp4" autoplay loop muted playsinline class="h-10 w-10 rounded-full border border-red-600/60 object-cover shadow-sm"></video>
+<a href="./intro.html" aria-label="NeNoX Forge Home" class="flex items-center space-x-3">
+<video src="logo.mp4" autoplay loop muted playsinline class="pointer-events-none h-10 w-10 rounded-full border border-red-600/60 object-cover shadow-sm"></video>
 <span class="font-bold text-xl tracking-wider text-white">NeNoX Forge</span>
 </a>
-
 <a href="https://discord.gg/tYzSBzRZGE" target="_blank" rel="noopener noreferrer" class="zoom-card flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg shadow-lg shadow-indigo-600/30">
 <i class="fa-brands fa-discord text-lg"></i>
 <span>Join Discord</span>
 </a>
-
 </div>
 </nav>
 
 <header class="relative min-h-[calc(100vh-80px)] flex items-center justify-center px-6 py-12 overflow-hidden">
 
-<video src="bg-video.mp4" autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover z-0 opacity-60"></video>
+<video id="bg-video" src="bg-video.mp4" autoplay loop muted playsinline disablepictureinpicture class="absolute inset-0 w-full h-full object-cover z-0 opacity-60"></video>
 
 <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-red-950/40 z-0"></div>
 <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(185,28,28,0.15)_0%,transparent_70%)] z-0"></div>
@@ -116,359 +114,167 @@ opacity:1;transition:opacity .16s ease-out
 <div class="relative z-10 max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
 
 <div class="lg:col-span-5 text-left space-y-4 bg-black/60 p-6 rounded-2xl border border-red-900/30 shadow-2xl">
-
-<h1 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">
-NeNoX Forge
-</h1>
-
+<h1 class="text-4xl sm:text-5xl font-extrabold text-white tracking-tight">NeNoX Forge</h1>
 <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
 We are building a dedicated team of students to compete—and win—in hackathons all year long. We won't micro-manage you, push you to care, or chase you for updates. We want self-driven builders who want to be here, collaborate, and execute on their own initiative.
 </p>
-
 <p class="text-slate-300 text-sm sm:text-base leading-relaxed pt-2 border-t border-red-900/40">
 Here's the deal: When you hit a wall or face a tough technical challenge, we've got your back with guidance and support. But the fire to show up and build has to come from you.
 </p>
-
-<p class="text-red-500 font-semibold text-xs sm:text-sm tracking-wide uppercase pt-1">
-Caution :- we work aggressively ( Hyper Fast )
-</p>
-
+<p class="text-red-500 font-semibold text-xs sm:text-sm tracking-wide uppercase pt-1">Caution :- we work aggressively ( Hyper Fast )</p>
 </div>
 
 <div class="lg:col-span-3 flex justify-center items-center py-6">
 <div class="relative group">
-
-<div class="absolute -inset-1 bg-gradient-to-r from-red-600 to-rose-700 rounded-full blur-xl opacity-50 group-hover:opacity-80 transition duration-1000"></div>
-
+<!-- glow: opacity-only transition (the old one animated the blur filter for 1s = laggy) -->
+<div class="absolute -inset-1 bg-gradient-to-r from-red-600 to-rose-700 rounded-full blur-xl opacity-50 group-hover:opacity-80 transition-opacity duration-300 transform-gpu"></div>
 <video src="logo.mp4" autoplay loop muted playsinline class="relative h-64 w-64 sm:h-72 sm:w-72 rounded-full object-cover border-2 border-red-600/80 shadow-2xl shadow-red-900/50"></video>
-
 </div>
 </div>
 
 <div class="lg:col-span-4 flex flex-col justify-center space-y-6 pl-0 lg:pl-6">
 
 <a href="https://discord.gg/tYzSBzRZGE" target="_blank" rel="noopener noreferrer" class="zoom-card group flex items-center space-x-4 bg-slate-900/80 hover:bg-red-950/60 border border-red-900/40 p-4 rounded-xl shadow-lg">
-
-<div class="w-12 h-12 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-<i class="fa-brands fa-discord"></i>
-</div>
-
-<span class="text-xl font-bold text-white group-hover:text-red-400 transition-colors">
-NeNoX Forge Server
-</span>
-
+<div class="w-12 h-12 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-2xl"><i class="fa-brands fa-discord"></i></div>
+<span class="text-xl font-bold text-white group-hover:text-red-400 transition-colors duration-150">NeNoX Forge Server</span>
 </a>
 
 <a href="https://docs.google.com/forms/d/e/1FAIpQLSfmnMVp0bzTQPwQx21giPovY9UxyBOXO3R5dkxs4ajmG5xOhg/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="zoom-card group flex items-center space-x-4 bg-slate-900/80 hover:bg-red-950/60 border border-red-900/40 p-4 rounded-xl shadow-lg">
-
-<div class="w-12 h-12 rounded-lg bg-red-600/20 text-red-500 border border-red-500/30 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-<i class="fa-solid fa-paper-plane"></i>
-</div>
-
-<span class="text-xl font-bold text-white group-hover:text-red-400 transition-colors">
-Application Link
-</span>
-
+<div class="w-12 h-12 rounded-lg bg-red-600/20 text-red-500 border border-red-500/30 flex items-center justify-center text-2xl"><i class="fa-solid fa-paper-plane"></i></div>
+<span class="text-xl font-bold text-white group-hover:text-red-400 transition-colors duration-150">Application Link</span>
 </a>
 
 <a href="#roles" class="zoom-card group flex items-center space-x-4 bg-slate-900/80 hover:bg-red-950/60 border border-red-900/40 p-4 rounded-xl shadow-lg">
-
-<div class="w-12 h-12 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-<i class="fa-solid fa-file-lines"></i>
-</div>
-
-<span class="text-xl font-bold text-white group-hover:text-red-400 transition-colors">
-Team Details
-</span>
-
+<div class="w-12 h-12 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 flex items-center justify-center text-2xl"><i class="fa-solid fa-file-lines"></i></div>
+<span class="text-xl font-bold text-white group-hover:text-red-400 transition-colors duration-150">Team Details</span>
 </a>
 
 </div>
 </div>
 </header>
 
-<section id="roles" class="max-w-7xl mx-auto px-6 py-24 border-t border-red-900/30 w-full perspective-container">
+<section id="roles" class="max-w-7xl mx-auto px-6 py-24 border-t border-red-900/30 w-full">
 
 <div class="text-center mb-16">
-
-<h2 class="text-3xl sm:text-5xl font-extrabold text-white">
-Team Details &amp; Open Roles
-</h2>
-
-<p class="text-red-400/80 mt-3 text-lg">
-Detailed breakdown of specialized roles for our hackathon lineup
-</p>
-
+<h2 class="text-3xl sm:text-5xl font-extrabold text-white">Team Details &amp; Open Roles</h2>
+<p class="text-red-400/80 mt-3 text-lg">Detailed breakdown of specialized roles for our hackathon lineup</p>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
 <div class="h-full">
-
-<div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between group">
-
+<div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between">
 <div>
-
-<div class="w-14 h-14 rounded-xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-2xl mb-6">
-<i class="fa-solid fa-user-shield"></i>
+<div class="w-14 h-14 rounded-xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-2xl mb-6"><i class="fa-solid fa-user-shield"></i></div>
+<h3 class="text-2xl font-bold text-white mb-2">Ethical Hacker / Security Specialist</h3>
+<p class="text-slate-300 text-xs leading-relaxed mb-4"><span class="font-bold text-red-400">Tech Stack:</span> Linux, Bash, Nmap, Metasploit, Wireshark, Burp Suite, Network Security.</p>
+<p class="text-slate-400 text-sm leading-relaxed mb-6">You are the team's defensive shield and offensive strategist, securing endpoints, handling cloud deployments, and running exploit scripts under time constraints.</p>
 </div>
-
-<h3 class="text-2xl font-bold text-white mb-2">
-Ethical Hacker / Security Specialist
-</h3>
-
-<p class="text-slate-300 text-xs leading-relaxed mb-4">
-<span class="font-bold text-red-400">Tech Stack:</span>
-Linux, Bash, Nmap, Metasploit, Wireshark, Burp Suite, Network Security.
-</p>
-
-<p class="text-slate-400 text-sm leading-relaxed mb-6">
-You are the team's defensive shield and offensive strategist, securing endpoints, handling cloud deployments, and running exploit scripts under time constraints.
-</p>
-
-</div>
-
-<a href="ethical-hacker.html" class="inline-flex items-center justify-center w-full py-2.5 px-4 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-800/50 text-red-300 font-semibold text-sm transition-all hover:text-white">
-View Role Details
-<i class="fa-solid fa-arrow-right text-xs ml-2"></i>
-</a>
-
+<a href="ethical-hacker.html" class="inline-flex items-center justify-center w-full py-2.5 px-4 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-800/50 text-red-300 font-semibold text-sm transition-colors duration-150 hover:text-white">View Role Details <i class="fa-solid fa-arrow-right text-xs ml-2"></i></a>
 </div>
 </div>
 
 <div class="h-full">
-
-<div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between group">
-
+<div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between">
 <div>
-
-<div class="w-14 h-14 rounded-xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-2xl mb-6">
-<i class="fa-solid fa-code"></i>
+<div class="w-14 h-14 rounded-xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-2xl mb-6"><i class="fa-solid fa-code"></i></div>
+<h3 class="text-2xl font-bold text-white mb-2">Frontend Developer</h3>
+<p class="text-slate-300 text-xs leading-relaxed mb-4"><span class="font-bold text-red-400">Tech Stack:</span> React.js, Next.js, TypeScript, Tailwind CSS, WebSockets, State Management.</p>
+<p class="text-slate-400 text-sm leading-relaxed mb-6">You own client-side execution, translating raw prototypes into dynamic, production-ready web apps built for speed and live demonstrations.</p>
 </div>
-
-<h3 class="text-2xl font-bold text-white mb-2">
-Frontend Developer
-</h3>
-
-<p class="text-slate-300 text-xs leading-relaxed mb-4">
-<span class="font-bold text-red-400">Tech Stack:</span>
-React.js, Next.js, TypeScript, Tailwind CSS, WebSockets, State Management.
-</p>
-
-<p class="text-slate-400 text-sm leading-relaxed mb-6">
-You own client-side execution, translating raw prototypes into dynamic, production-ready web apps built for speed and live demonstrations.
-</p>
-
-</div>
-
-<a href="frontend-developer.html" class="inline-flex items-center justify-center w-full py-2.5 px-4 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-800/50 text-red-300 font-semibold text-sm transition-all hover:text-white">
-View Role Details
-<i class="fa-solid fa-arrow-right text-xs ml-2"></i>
-</a>
-
+<a href="frontend-developer.html" class="inline-flex items-center justify-center w-full py-2.5 px-4 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-800/50 text-red-300 font-semibold text-sm transition-colors duration-150 hover:text-white">View Role Details <i class="fa-solid fa-arrow-right text-xs ml-2"></i></a>
 </div>
 </div>
 
 <div class="h-full">
-
-<div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between group">
-
+<div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between">
 <div>
-
-<div class="w-14 h-14 rounded-xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-2xl mb-6">
-<i class="fa-solid fa-server"></i>
+<div class="w-14 h-14 rounded-xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-2xl mb-6"><i class="fa-solid fa-server"></i></div>
+<h3 class="text-2xl font-bold text-white mb-2">Backend Developer</h3>
+<p class="text-slate-300 text-xs leading-relaxed mb-4"><span class="font-bold text-red-400">Tech Stack:</span> Python (FastAPI), Node.js, PostgreSQL, MongoDB, Redis, LLM Integration.</p>
+<p class="text-slate-400 text-sm leading-relaxed mb-6">You design server architectures, manage database schemas, connect machine learning pipelines, and ensure lightning-fast backend responses.</p>
 </div>
-
-<h3 class="text-2xl font-bold text-white mb-2">
-Backend Developer
-</h3>
-
-<p class="text-slate-300 text-xs leading-relaxed mb-4">
-<span class="font-bold text-red-400">Tech Stack:</span>
-Python (FastAPI), Node.js, PostgreSQL, MongoDB, Redis, LLM Integration.
-</p>
-
-<p class="text-slate-400 text-sm leading-relaxed mb-6">
-You design server architectures, manage database schemas, connect machine learning pipelines, and ensure lightning-fast backend responses.
-</p>
-
-</div>
-
-<a href="backend-developer.html" class="inline-flex items-center justify-center w-full py-2.5 px-4 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-800/50 text-red-300 font-semibold text-sm transition-all hover:text-white">
-View Role Details
-<i class="fa-solid fa-arrow-right text-xs ml-2"></i>
-</a>
-
+<a href="backend-developer.html" class="inline-flex items-center justify-center w-full py-2.5 px-4 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-800/50 text-red-300 font-semibold text-sm transition-colors duration-150 hover:text-white">View Role Details <i class="fa-solid fa-arrow-right text-xs ml-2"></i></a>
 </div>
 </div>
 
 <div class="h-full">
-
-<div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between group">
-
+<div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between">
 <div>
-
-<div class="w-14 h-14 rounded-xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-2xl mb-6">
-<i class="fa-solid fa-diagram-project"></i>
+<div class="w-14 h-14 rounded-xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-2xl mb-6"><i class="fa-solid fa-diagram-project"></i></div>
+<h3 class="text-2xl font-bold text-white mb-2">Research, Strategy &amp; PM</h3>
+<p class="text-slate-300 text-xs leading-relaxed mb-4"><span class="font-bold text-red-400">Tech Stack:</span> Agile, Problem Framing, Market Research, Pitch Strategy, Notion/Jira.</p>
+<p class="text-slate-400 text-sm leading-relaxed mb-6">You validate problem statements, align execution with competition rubrics, manage MVP sprint timelines, and sculpt winning pitch decks.</p>
 </div>
-
-<h3 class="text-2xl font-bold text-white mb-2">
-Research, Strategy &amp; PM
-</h3>
-
-<p class="text-slate-300 text-xs leading-relaxed mb-4">
-<span class="font-bold text-red-400">Tech Stack:</span>
-Agile, Problem Framing, Market Research, Pitch Strategy, Notion/Jira.
-</p>
-
-<p class="text-slate-400 text-sm leading-relaxed mb-6">
-You validate problem statements, align execution with competition rubrics, manage MVP sprint timelines, and sculpt winning pitch decks.
-</p>
-
-</div>
-
-<a href="research-pm.html" class="inline-flex items-center justify-center w-full py-2.5 px-4 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-800/50 text-red-300 font-semibold text-sm transition-all hover:text-white">
-View Role Details
-<i class="fa-solid fa-arrow-right text-xs ml-2"></i>
-</a>
-
+<a href="research-pm.html" class="inline-flex items-center justify-center w-full py-2.5 px-4 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-800/50 text-red-300 font-semibold text-sm transition-colors duration-150 hover:text-white">View Role Details <i class="fa-solid fa-arrow-right text-xs ml-2"></i></a>
 </div>
 </div>
 
 <div class="h-full">
-
-<div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between group">
-
+<div class="zoom-card h-full bg-red-950/30 p-8 rounded-2xl border border-red-900/40 flex flex-col justify-between">
 <div>
-
-<div class="w-14 h-14 rounded-xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-2xl mb-6">
-<i class="fa-solid fa-palette"></i>
+<div class="w-14 h-14 rounded-xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-2xl mb-6"><i class="fa-solid fa-palette"></i></div>
+<h3 class="text-2xl font-bold text-white mb-2">UI/UX Designer &amp; Product Lead</h3>
+<p class="text-slate-300 text-xs leading-relaxed mb-4"><span class="font-bold text-red-400">Tech Stack:</span> Figma, Interactive Prototyping, Design Systems, Motion Graphics, Wireframing.</p>
+<p class="text-slate-400 text-sm leading-relaxed mb-6">You craft high-fidelity prototypes, build design systems early in sprints, and design striking visual presentation slides that hook judges.</p>
 </div>
-
-<h3 class="text-2xl font-bold text-white mb-2">
-UI/UX Designer &amp; Product Lead
-</h3>
-
-<p class="text-slate-300 text-xs leading-relaxed mb-4">
-<span class="font-bold text-red-400">Tech Stack:</span>
-Figma, Interactive Prototyping, Design Systems, Motion Graphics, Wireframing.
-</p>
-
-<p class="text-slate-400 text-sm leading-relaxed mb-6">
-You craft high-fidelity prototypes, build design systems early in sprints, and design striking visual presentation slides that hook judges.
-</p>
-
-</div>
-
-<a href="uiux-designer.html" class="inline-flex items-center justify-center w-full py-2.5 px-4 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-800/50 text-red-300 font-semibold text-sm transition-all hover:text-white">
-View Role Details
-<i class="fa-solid fa-arrow-right text-xs ml-2"></i>
-</a>
-
+<a href="uiux-designer.html" class="inline-flex items-center justify-center w-full py-2.5 px-4 rounded-xl bg-red-950/60 hover:bg-red-900/80 border border-red-800/50 text-red-300 font-semibold text-sm transition-colors duration-150 hover:text-white">View Role Details <i class="fa-solid fa-arrow-right text-xs ml-2"></i></a>
 </div>
 </div>
 
 </div>
 </section>
 
-<section id="recent" class="max-w-7xl mx-auto px-6 py-24 border-t border-red-900/30 w-full perspective-container">
+<section id="recent" class="max-w-7xl mx-auto px-6 py-24 border-t border-red-900/30 w-full">
 
 <div class="text-center mb-14">
-
-<p class="text-red-500 text-base sm:text-lg font-bold tracking-[0.3em] uppercase mb-8">
-Forge Activity
-</p>
-
+<p class="text-red-500 text-base sm:text-lg font-bold tracking-[0.3em] uppercase mb-8">Forge Activity</p>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
 
 <!-- RECENT PROJECTS -->
-
 <div class="h-fit">
-
 <div class="zoom-card zoom-lg bg-red-950/30 p-6 sm:p-7 rounded-2xl border border-red-900/40 flex flex-col">
 
 <div class="flex items-center justify-between mb-7">
-
 <div>
-
-<p class="text-red-500 text-xs font-bold tracking-[0.2em] uppercase">
-01 / Projects
-</p>
-
-<h3 class="text-2xl font-bold text-white mt-2">
-Recent Projects
-</h3>
-
+<p class="text-red-500 text-xs font-bold tracking-[0.2em] uppercase">01 / Projects</p>
+<h3 class="text-2xl font-bold text-white mt-2">Recent Projects</h3>
 </div>
-
-<div class="w-12 h-12 rounded-xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-xl">
-<i class="fa-solid fa-code"></i>
-</div>
-
+<div class="w-12 h-12 rounded-xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-xl"><i class="fa-solid fa-code"></i></div>
 </div>
 
 <div class="space-y-4">
 
 <div class="zoom-item p-4 rounded-xl bg-black/50 border border-red-900/30">
-
 <div class="flex items-start justify-between gap-4">
-
 <div>
-
-<h4 class="font-bold text-white text-base sm:text-lg">
-NeNoX Forge Website
-</h4>
-
-<p class="text-slate-400 text-sm leading-relaxed mt-2">
-The collective's main digital platform for projects, activities, team roles, student opportunities and community updates.
-</p>
-
+<h4 class="font-bold text-white text-base sm:text-lg">NeNoX Forge Website</h4>
+<p class="text-slate-400 text-sm leading-relaxed mt-2">The collective's main digital platform for projects, activities, team roles, student opportunities and community updates.</p>
 </div>
-
-<span class="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
-Active
-</span>
-
+<span class="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">Active</span>
 </div>
-
 <div class="mt-4 flex flex-wrap gap-2 text-[10px] font-bold text-slate-500">
 <span class="px-2 py-1 rounded bg-white/5">WEB</span>
 <span class="px-2 py-1 rounded bg-white/5">UI/UX</span>
 <span class="px-2 py-1 rounded bg-white/5">COMMUNITY</span>
 </div>
-
 </div>
 
 <div class="zoom-item p-4 rounded-xl bg-black/50 border border-red-900/30">
-
 <div class="flex items-start justify-between gap-4">
-
 <div>
-
-<h4 class="font-bold text-white text-base sm:text-lg">
-AI-Assisted Cybersecurity Toolkit
-</h4>
-
-<p class="text-slate-400 text-sm leading-relaxed mt-2">
-A student project exploring how AI can work alongside authorized Linux security tools such as Nmap to organize reconnaissance, explain results and improve security workflows.
-</p>
-
+<h4 class="font-bold text-white text-base sm:text-lg">AI-Assisted Cybersecurity Toolkit</h4>
+<p class="text-slate-400 text-sm leading-relaxed mt-2">A student project exploring how AI can work alongside authorized Linux security tools such as Nmap to organize reconnaissance, explain results and improve security workflows.</p>
 </div>
-
-<span class="text-[10px] font-bold px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 whitespace-nowrap">
-In Dev
-</span>
-
+<span class="text-[10px] font-bold px-2 py-1 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 whitespace-nowrap">In Dev</span>
 </div>
-
 <div class="mt-4 flex flex-wrap gap-2 text-[10px] font-bold text-slate-500">
 <span class="px-2 py-1 rounded bg-white/5">AI</span>
 <span class="px-2 py-1 rounded bg-white/5">CYBERSECURITY</span>
 <span class="px-2 py-1 rounded bg-white/5">LINUX</span>
 </div>
-
 </div>
 
 </div>
@@ -476,49 +282,24 @@ In Dev
 </div>
 
 <!-- RECENT UPDATES -->
-
 <div class="h-fit">
-
 <div class="zoom-card zoom-lg bg-red-950/30 p-6 sm:p-7 rounded-2xl border border-red-900/40 flex flex-col">
 
 <div class="flex items-center justify-between mb-7">
-
 <div>
-
-<p class="text-red-500 text-xs font-bold tracking-[0.2em] uppercase">
-02 / Updates
-</p>
-
-<h3 class="text-2xl font-bold text-white mt-2">
-Recent Updates
-</h3>
-
+<p class="text-red-500 text-xs font-bold tracking-[0.2em] uppercase">02 / Updates</p>
+<h3 class="text-2xl font-bold text-white mt-2">Recent Updates</h3>
 </div>
-
-<div class="w-12 h-12 rounded-xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-xl">
-<i class="fa-solid fa-calendar-check"></i>
-</div>
-
+<div class="w-12 h-12 rounded-xl bg-red-600/10 border border-red-600/30 flex items-center justify-center text-red-500 text-xl"><i class="fa-solid fa-calendar-check"></i></div>
 </div>
 
 <div id="recent-hackathons" class="space-y-4" aria-live="polite">
-
-<p class="text-slate-500 text-xs py-4 text-center">
-Loading updates...
-</p>
-
+<p class="text-slate-500 text-xs py-4 text-center">Loading updates...</p>
 </div>
 
 <div class="mt-5 pt-4 border-t border-red-900/30 flex items-center justify-between gap-4">
-
-<p class="text-[10px] text-slate-500">
-New opportunities are published here after verification.
-</p>
-
-<span class="shrink-0 flex items-center">
-<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-</span>
-
+<p class="text-[10px] text-slate-500">New opportunities are published here after verification.</p>
+<span class="shrink-0 flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span></span>
 </div>
 
 </div>
@@ -528,420 +309,227 @@ New opportunities are published here after verification.
 </section>
 
 <section id="apply" class="max-w-3xl mx-auto px-6 py-20 border-t border-red-900/30 w-full text-center">
-
-<h2 class="text-3xl sm:text-4xl font-bold text-white">
-Apply for NeNoX Forge
-</h2>
-
-<p class="text-slate-400 mt-3 text-lg mb-8">
-Ready to execute? Fill out our application form and join our Discord community.
-</p>
-
-<a href="https://docs.google.com/forms/d/e/1FAIpQLSfmnMVp0bzTQPwQx21giPovY9UxyBOXO3R5dkxs4ajmG5xOhg/viewform?usp=header"
-target="_blank"
-rel="noopener noreferrer"
-class="zoom-card inline-flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg shadow-red-600/30 text-lg">
-
-<i class="fa-solid fa-paper-plane mr-3"></i>
-Open Application Form
-
+<h2 class="text-3xl sm:text-4xl font-bold text-white">Apply for NeNoX Forge</h2>
+<p class="text-slate-400 mt-3 text-lg mb-8">Ready to execute? Fill out our application form and join our Discord community.</p>
+<a href="https://docs.google.com/forms/d/e/1FAIpQLSfmnMVp0bzTQPwQx21giPovY9UxyBOXO3R5dkxs4ajmG5xOhg/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="zoom-card inline-flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg shadow-red-600/30 text-lg">
+<i class="fa-solid fa-paper-plane mr-3"></i>Open Application Form
 </a>
-
 </section>
 
 <footer class="border-t border-red-900/30 bg-black/80 py-8 text-center text-slate-500 text-sm space-y-3">
-
 <p class="text-slate-300 italic text-sm max-w-2xl mx-auto px-4">
 &ldquo;The strength of the team is each individual member. The strength of each member is the team.&rdquo;
-<span class="not-italic text-red-400 font-medium">
-— Phil Jackson
-</span>
+<span class="not-italic text-red-400 font-medium">— Phil Jackson</span>
 </p>
-
-<p>
-© 2026 Team NeNoX Forge • Built for University Hackathons
-</p>
-
-<p class="text-red-500/80 uppercase text-xs tracking-widest font-semibold">
-Build on NeNoX Heart to ace competition
-</p>
-
+<p>© 2026 Team NeNoX Forge • Built for University Hackathons</p>
+<p class="text-red-500/80 uppercase text-xs tracking-widest font-semibold">Build on NeNoX Heart to ace competition</p>
 </footer>
 
 </div>
 
-<button id="music-toggle"
-aria-label="Toggle Background Music"
-class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-12 h-12 rounded-full bg-red-950/80 border border-red-900/60 text-slate-400 hover:text-white hover:bg-red-900/90 hover:scale-110 shadow-[0_0_20px_rgba(220,38,38,0.3)] transition-all duration-300 group">
-
+<button id="music-toggle" aria-label="Toggle Background Music" class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-12 h-12 rounded-full bg-red-950/80 border border-red-900/60 text-slate-400 hover:text-white hover:bg-red-900/90 hover:scale-110 shadow-[0_0_20px_rgba(220,38,38,0.3)] transition-all duration-300 group">
 <i id="music-icon" class="fa-solid fa-music text-lg group-hover:rotate-12 transition-transform"></i>
-
 </button>
 
-<audio id="bg-music" loop preload="none">
-<source src="ambient.mp3" type="audio/mpeg">
-</audio>
+<audio id="bg-music" loop preload="none"><source src="ambient.mp3" type="audio/mpeg"></audio>
 
 <script>
+/* ---------- SPLASH: hides as soon as page is loaded (min 700ms so the logo is seen) ---------- */
+(function(){
+  const splash=document.getElementById('splash-screen');
+  const MIN=1700;
+  function hide(){
+    splash.style.opacity='0';
+    splash.style.visibility='hidden';
+    setTimeout(()=>{
+      const v=splash.querySelector('video');
+      if(v){v.pause();v.removeAttribute('src');v.load();}
+      splash.remove();
+    },320);
+  }
+  window.addEventListener('load',()=>setTimeout(hide,Math.max(0,MIN-performance.now())));
+})();
 
-window.addEventListener('load',()=>{
-
-const splashScreen=document.getElementById('splash-screen');
-
-setTimeout(()=>{
-
-splashScreen.style.opacity='0';
-splashScreen.style.visibility='hidden';
-
-setTimeout(()=>{
-
-const v=splashScreen.querySelector('video');
-
-if(v){
-v.pause();
-v.removeAttribute('src');
-v.load();
-}
-
-splashScreen.remove();
-
-},400);
-
-},1500);
-
-});
-
+/* ---------- MUSIC + VIDEO ---------- */
 document.addEventListener('DOMContentLoaded',()=>{
+  const music=document.getElementById('bg-music');
+  const btn=document.getElementById('music-toggle');
+  const icon=document.getElementById('music-icon');
+  music.volume=.3;
+  let playing=false;
+  btn.addEventListener('click',()=>{
+    if(playing){
+      music.pause();
+      icon.className='fa-solid fa-music text-lg text-slate-400';
+      playing=false;
+    }else{
+      music.play().then(()=>{
+        icon.className='fa-solid fa-compact-disc text-lg text-red-400 animate-spin';
+        playing=true;
+      }).catch(err=>console.log('Autoplay prevented:',err));
+    }
+  });
 
-const music=document.getElementById('bg-music');
-const musicBtn=document.getElementById('music-toggle');
-const musicIcon=document.getElementById('music-icon');
+  /* heavy background video: skip it on Data Saver or reduced-motion devices */
+  const bg=document.getElementById('bg-video');
+  const saveData=navigator.connection&&navigator.connection.saveData;
+  if(bg&&(saveData||matchMedia('(prefers-reduced-motion: reduce)').matches)){bg.remove();}
 
-music.volume=.3;
+  /* pause off-screen videos (except logos, which stay in sync) */
+  const videoObs=new IntersectionObserver(entries=>entries.forEach(e=>{
+    if(e.isIntersecting)e.target.play().catch(()=>{});else e.target.pause();
+  }),{threshold:.05});
+  document.querySelectorAll('video:not([src="logo.mp4"])').forEach(v=>videoObs.observe(v));
 
-let isPlaying=false;
-
-function toggleMusic(){
-
-if(isPlaying){
-
-music.pause();
-musicIcon.className='fa-solid fa-music text-lg text-slate-400';
-
-}else{
-
-music.play().then(()=>{
-
-musicIcon.className='fa-solid fa-compact-disc text-lg text-red-400 animate-spin';
-
-}).catch(err=>console.log('Autoplay prevented:',err));
-
-}
-
-isPlaying=!isPlaying;
-
-}
-
-musicBtn.addEventListener('click',toggleMusic);
-
-const videoObs=new IntersectionObserver(
-
-entries=>entries.forEach(e=>{
-
-if(e.isIntersecting)
-e.target.play().catch(()=>{});
-else
-e.target.pause();
-
-}),
-
-{threshold:.05}
-
-);
-
-/* logo videos are NOT paused on scroll, so they always stay in sync */
-document.querySelectorAll('video:not([src="logo.mp4"])').forEach(v=>videoObs.observe(v));
-
+  /* logo videos */
+  document.querySelectorAll('video[src="logo.mp4"]').forEach(v=>{
+    v.loop=true;v.muted=true;v.playsInline=true;v.setAttribute('aria-hidden','true');
+    const play=()=>v.play().catch(()=>{});
+    if(v.readyState>=2)play();else v.addEventListener('loadeddata',play,{once:true});
+  });
 });
-
 </script>
 
-<!-- ZOOM: mobile auto-zoom + instant click/tap animation -->
-
+<!-- ZOOM: mobile auto-zoom + instant click/tap -->
 <script>
-
 (function(){
+  const SEL='.zoom-card,.zoom-item';
+  const isTouch=matchMedia('(hover: none), (pointer: coarse)').matches;
 
-const SEL='.zoom-card,.zoom-item';
+  if(isTouch){
+    const zoomObs=new IntersectionObserver(
+      entries=>entries.forEach(e=>e.target.classList.toggle('is-active',e.isIntersecting)),
+      {rootMargin:'-40% 0px -40% 0px',threshold:0}
+    );
+    window.registerZoom=function(){
+      document.querySelectorAll(SEL).forEach(el=>{
+        if(el.dataset.zoomReg)return;
+        el.dataset.zoomReg='1';
+        zoomObs.observe(el);
+      });
+    };
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',window.registerZoom);
+    else window.registerZoom();
+  }
 
-/* MOBILE: card passing through the middle of the screen zooms in */
-const isTouch=window.matchMedia('(hover: none), (pointer: coarse)').matches;
-
-if(isTouch){
-
-const zoomObs=new IntersectionObserver(
-
-entries=>entries.forEach(e=>e.target.classList.toggle('is-active',e.isIntersecting)),
-
-{rootMargin:'-40% 0px -40% 0px',threshold:0}
-
-);
-
-window.registerZoom=function(){
-
-document.querySelectorAll(SEL).forEach(el=>{
-
-if(el.dataset.zoomReg)return;
-
-el.dataset.zoomReg='1';
-zoomObs.observe(el);
-
-});
-
-};
-
-document.addEventListener('DOMContentLoaded',window.registerZoom);
-
-}
-
-/* CLICK / TAP: animation starts the moment the finger or mouse goes down */
-function clearPressed(){
-
-document.querySelectorAll('.is-pressed').forEach(el=>el.classList.remove('is-pressed'));
-
-}
-
-document.addEventListener('pointerdown',e=>{
-
-const el=e.target.closest&&e.target.closest(SEL);
-
-if(el)el.classList.add('is-pressed');
-
-},{passive:true});
-
-['pointerup','pointercancel','pointerleave','dragstart'].forEach(ev=>{
-
-document.addEventListener(ev,clearPressed,{passive:true});
-
-});
-
-window.addEventListener('blur',clearPressed);
-
+  function clearPressed(){document.querySelectorAll('.is-pressed').forEach(el=>el.classList.remove('is-pressed'));}
+  document.addEventListener('pointerdown',e=>{
+    const el=e.target.closest&&e.target.closest(SEL);
+    if(el)el.classList.add('is-pressed');
+  },{passive:true});
+  ['pointerup','pointercancel','pointerleave','dragstart'].forEach(ev=>document.addEventListener(ev,clearPressed,{passive:true}));
+  window.addEventListener('blur',clearPressed);
 })();
-
 </script>
 
-<!-- LOGO VIDEO SYNC: splash, navbar and hero logo.mp4 always play at the exact same time -->
-
+<!-- HACKATHON UPDATES: shows saved copy instantly, then refreshes from the server -->
 <script>
-
 (function(){
+  const target=document.getElementById('recent-hackathons');
+  if(!target)return;
+  const API_URL='https://nenox-forge-backend.onrender.com/api/hackathons';
+  const CACHE_KEY='nf_hackathons_v1';
 
-const master=document.querySelector('nav video[src="logo.mp4"]');
+  const showMessage=(msg,error=false)=>{
+    target.replaceChildren();
+    const p=document.createElement('p');
+    p.className=error?'text-red-400 text-xs py-4 text-center':'text-slate-500 text-xs py-4 text-center';
+    p.textContent=msg;
+    target.appendChild(p);
+  };
 
-if(!master)return;
+  function render(events){
+    if(!Array.isArray(events)||events.length===0){
+      showMessage('No verified opportunities at the moment. Check back soon.');
+      return;
+    }
+    const frag=document.createDocumentFragment();   /* one single DOM insert = no layout thrash */
+    events.forEach(event=>{
+      const card=document.createElement('article');
+      card.className='zoom-item p-4 rounded-xl bg-black/50 border border-red-900/30';
 
-const vids=Array.from(document.querySelectorAll('video[src="logo.mp4"]'));
+      const top=document.createElement('div');
+      top.className='flex items-start justify-between gap-3';
+      const heading=document.createElement('div');
+      heading.className='min-w-0';
 
-function ready(v){
+      const meta=document.createElement('p');
+      meta.className='text-red-500 text-[10px] font-bold tracking-[0.15em] uppercase';
+      meta.textContent=`TELEGRAM BOT · ${event.format||'PHYSICAL'} · ${event.event_date||'DATE TO BE ANNOUNCED'}`;
 
-return v.readyState>=2?Promise.resolve():new Promise(res=>{
+      const title=document.createElement('h4');
+      title.className='font-bold text-white mt-1';
+      title.textContent=event.title||'Hackathon Update';
+      heading.append(meta,title);
 
-v.addEventListener('loadeddata',res,{once:true});
+      const badge=document.createElement('span');
+      badge.className='text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap';
+      badge.textContent='BOT APPROVED';
 
-});
+      top.append(heading,badge);
+      card.appendChild(top);
 
-}
+      if(event.description){
+        const desc=document.createElement('p');
+        desc.className='text-slate-400 text-xs leading-relaxed mt-2';
+        desc.textContent=event.description;
+        card.appendChild(desc);
+      }
 
-/* start every logo video together from frame 0 */
-Promise.race([
-Promise.all(vids.map(ready)),
-new Promise(res=>setTimeout(res,2500))
-]).then(()=>{
+      const details=document.createElement('div');
+      details.className='grid grid-cols-2 gap-2 mt-3 text-[10px] text-slate-500';
+      [['CITY',event.city],['VENUE',event.venue],['DEADLINE',event.deadline],['ELIGIBILITY',event.eligibility]].forEach(([label,value])=>{
+        if(value){
+          const item=document.createElement('span');
+          item.textContent=`${label}: ${value}`;
+          details.appendChild(item);
+        }
+      });
+      if(details.childElementCount)card.appendChild(details);
 
-vids.forEach(v=>{
+      if(event.registration_url){
+        const link=document.createElement('a');
+        link.href=event.registration_url;
+        link.target='_blank';
+        link.rel='noopener noreferrer';
+        link.textContent='Registration Portal ↗';
+        link.className='mt-3 inline-flex w-full justify-center px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-colors duration-150';
+        card.appendChild(link);
+      }
+      frag.appendChild(card);
+    });
+    target.replaceChildren(frag);
+    if(window.registerZoom)window.registerZoom();
+  }
 
-try{v.currentTime=0;}catch(e){}
+  /* 1) instant: show the last saved list */
+  let hadCache=false;
+  try{
+    const saved=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+    if(Array.isArray(saved)&&saved.length){render(saved);hadCache=true;}
+  }catch(e){}
 
-v.play().catch(()=>{});
-
-});
-
-/* keep them locked to the navbar video (fixes any drift) */
-setInterval(()=>{
-
-const t=master.currentTime;
-
-vids.forEach(v=>{
-
-if(v===master||!v.isConnected)return;
-
-if(v.paused)v.play().catch(()=>{});
-
-if(Math.abs(v.currentTime-t)>0.04){
-
-try{v.currentTime=t;}catch(e){}
-
-}
-
-});
-
-},150);
-
-});
-
+  /* 2) fresh: ask the server (Render free servers can take a while to wake up) */
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),20000);
+  fetch(API_URL,{headers:{'Accept':'application/json'},cache:'no-store',signal:controller.signal})
+    .then(r=>{if(!r.ok)throw new Error('Hackathons API returned HTTP '+r.status);return r.json();})
+    .then(events=>{
+      render(events);
+      try{localStorage.setItem(CACHE_KEY,JSON.stringify(events));}catch(e){}
+    })
+    .catch(error=>{
+      console.error('Unable to load hackathons:',error);
+      if(hadCache)return;   /* keep showing saved list instead of an error */
+      showMessage(
+        error.name==='AbortError'
+          ?'Hackathon updates are taking too long to respond. Please try again shortly.'
+          :'Live updates are currently unavailable. Please check back shortly.',
+        true
+      );
+    })
+    .finally(()=>clearTimeout(timeout));
 })();
-
-</script>
-
-<!-- TELEGRAM BOT APPROVED HACKATHONS -->
-
-<script>
-
-document.addEventListener('DOMContentLoaded',async()=>{
-
-const target=document.getElementById('recent-hackathons');
-
-if(!target)return;
-
-const API_URL='https://nenox-forge-backend.onrender.com/api/hackathons';
-
-try{
-
-const response=await fetch(API_URL);
-
-if(!response.ok)
-throw new Error('Hackathons API request failed');
-
-const events=await response.json();
-
-target.replaceChildren();
-
-if(!Array.isArray(events)||events.length===0){
-
-const empty=document.createElement('p');
-
-empty.className='text-slate-500 text-xs py-4 text-center';
-
-empty.textContent='No verified opportunities at the moment. Check back soon.';
-
-target.appendChild(empty);
-
-return;
-
-}
-
-events.forEach(event=>{
-
-const card=document.createElement('article');
-
-card.className='zoom-item p-4 rounded-xl bg-black/50 border border-red-900/30';
-
-const top=document.createElement('div');
-
-top.className='flex items-start justify-between gap-3';
-
-const heading=document.createElement('div');
-
-heading.className='min-w-0';
-
-const meta=document.createElement('p');
-
-meta.className='text-red-500 text-[10px] font-bold tracking-[0.15em] uppercase';
-
-meta.textContent=`TELEGRAM BOT · ${event.format||'PHYSICAL'} · ${event.event_date||'DATE TO BE ANNOUNCED'}`;
-
-const title=document.createElement('h4');
-
-title.className='font-bold text-white mt-1';
-
-title.textContent=event.title||'Hackathon Update';
-
-heading.append(meta,title);
-
-const badge=document.createElement('span');
-
-badge.className='text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap';
-
-badge.textContent='BOT APPROVED';
-
-top.append(heading,badge);
-
-card.appendChild(top);
-
-if(event.description){
-
-const desc=document.createElement('p');
-
-desc.className='text-slate-400 text-xs leading-relaxed mt-2';
-
-desc.textContent=event.description;
-
-card.appendChild(desc);
-
-}
-
-const details=document.createElement('div');
-
-details.className='grid grid-cols-2 gap-2 mt-3 text-[10px] text-slate-500';
-
-[
-['CITY',event.city],
-['VENUE',event.venue],
-['DEADLINE',event.deadline],
-['ELIGIBILITY',event.eligibility]
-].forEach(([label,value])=>{
-
-if(value){
-
-const item=document.createElement('span');
-
-item.textContent=`${label}: ${value}`;
-
-details.appendChild(item);
-
-}
-
-});
-
-if(details.childElementCount)
-card.appendChild(details);
-
-if(event.registration_url){
-
-const link=document.createElement('a');
-
-link.href=event.registration_url;
-link.target='_blank';
-link.rel='noopener noreferrer';
-
-link.textContent='Registration Portal ↗';
-
-link.className='mt-3 inline-flex w-full justify-center px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all';
-
-card.appendChild(link);
-
-}
-
-target.appendChild(card);
-
-});
-
-}catch(error){
-
-console.error('Unable to load hackathons:',error);
-
-target.textContent='Live updates are currently unavailable. Please check back shortly.';
-
-}finally{
-
-/* let the newly added cards zoom on mobile too */
-if(window.registerZoom)window.registerZoom();
-
-}
-
-});
-
 </script>
 
 </body>
