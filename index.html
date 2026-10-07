@@ -546,7 +546,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
       const meta=document.createElement('p');
       meta.className='text-red-500 text-[10px] font-bold tracking-[0.15em] uppercase';
-      meta.textContent=`TELEGRAM BOT · ${event.format||'PHYSICAL'} · ${event.event_date||'DATE TO BE ANNOUNCED'}`;
+      meta.innerHTML=`<span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2 align-middle" aria-label="Telegram Bot" title="Telegram Bot"></span>${event.format||'PHYSICAL'} · ${event.event_date||'DATE TO BE ANNOUNCED'}`;
 
       const title=document.createElement('h4');
       title.className='font-bold text-white mt-1';
@@ -554,8 +554,9 @@ document.addEventListener('DOMContentLoaded',()=>{
       heading.append(meta,title);
 
       const badge=document.createElement('span');
-      badge.className='text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap';
-      badge.textContent='BOT APPROVED';
+      badge.className='inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+      badge.setAttribute('aria-label','Bot Approved');
+      badge.title='Bot Approved';
 
       top.append(heading,badge);
       card.appendChild(top);
