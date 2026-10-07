@@ -5,19 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NeNoX Forge | Hackathon Team Recruitment</title>
 
-<!-- connect early so the server/CDNs are ready before they're needed -->
+<!-- logo.mp4 FIRST: its download starts before anything else can block parsing,
+     so the first frame is ready the instant the splash paints -->
+<link rel="preload" href="logo.mp4" as="video" type="video/mp4" fetchpriority="high">
+
+<!-- connect early so the CDNs are ready before they're needed -->
 <link rel="preconnect" href="https://nenox-forge-backend.onrender.com" crossorigin>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
 
-<!-- fetch the logo video with HIGH priority during parse, so its first frame
-     is ready the moment the splash paints. One hidden master video decodes it
-     a single time; every logo on the page is a canvas painted from that one
-     video, so all logos stay perfectly in sync with zero drift. -->
-<link rel="preload" href="logo.mp4" as="video" type="video/mp4" fetchpriority="high">
+<!-- font-awesome loads async: icons pop in when ready, never block the splash -->
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- NOTE: the Tailwind Play CDN script now lives at the END of <body>. It was the
+     render-blocking bottleneck adding seconds before first paint. Critical splash
+     styles are inlined below so the logo screen paints instantly. -->
+
+<style>
+/* ===== CRITICAL: instant splash paint (needs no Tailwind) ===== */
+html{background:#000}
+#splash-screen{position:fixed;top:0;right:0;bottom:0;left:0;z-index:100;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .3s ease,visibility .3s ease}
+#splash-screen .splash-inner{display:flex;flex-direction:column;align-items:center;gap:1rem}
+#splash-screen canvas{width:144px;height:144px;border-radius:9999px;border:2px solid rgba(220,38,38,.6);background:#050505;box-shadow:0 0 50px rgba(220,38,38,.5);animation:splashPulse 1.6s ease-in-out infinite}
+#splash-screen .splash-title{font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:.2em;color:#fff;text-transform:uppercase}
+@keyframes splashPulse{0%,100%{box-shadow:0 0 25px rgba(220,38,38,.35)}50%{box-shadow:0 0 60px rgba(220,38,38,.75)}}
+</style>
 
 <style>
 #splash-screen{transition:opacity .3s ease,visibility .3s ease}
@@ -102,9 +115,9 @@ opacity:1;transition:opacity .15s ease-out
 <video id="logo-master" src="logo.mp4" muted loop playsinline preload="auto" disablepictureinpicture aria-hidden="true" style="position:fixed;top:0;left:0;width:4px;height:4px;opacity:0;pointer-events:none;z-index:-1;"></video>
 
 <div id="splash-screen" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center">
-<div class="flex flex-col items-center space-y-4">
+<div class="splash-inner flex flex-col items-center space-y-4">
 <canvas data-logo-canvas data-css="144" aria-hidden="true" class="h-36 w-36 rounded-full border-2 border-red-600/60 shadow-[0_0_50px_rgba(220,38,38,0.5)]"></canvas>
-<span class="text-2xl font-extrabold tracking-widest text-white uppercase">NeNoX Forge</span>
+<span class="splash-title text-2xl font-extrabold tracking-widest text-white uppercase">NeNoX Forge</span>
 </div>
 </div>
 
@@ -619,6 +632,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     .finally(()=>clearTimeout(timeout));
 })();
 </script>
+
+<!-- Tailwind Play CDN loads LAST: it styles the page but can never again delay
+     the splash / logo first paint -->
+<script src="https://cdn.tailwindcss.com"></script>
 
 </body>
 </html>
