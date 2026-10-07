@@ -6,17 +6,23 @@ function startBot() {
   const adminId = String(process.env.TELEGRAM_ADMIN_ID || "");
 
   if (!token || !adminId) {
-    console.error("Missing BOT_TOKEN or TELEGRAM_ADMIN_ID in .env");
+    console.error("❌ Missing BOT_TOKEN or TELEGRAM_ADMIN_ID in .env");
     return;
   }
 
-  const bot = new TelegramBot(token, { polling: true });
+  const bot = new TelegramBot(token, {
+    polling: true
+  });
 
   const pending = new Map();
   const editPending = new Map();
 
+  // ==========================================
+  // ADMIN CHECK
+  // ==========================================
+
   function isAdmin(msg) {
-    return String(msg.from.id) === adminId;
+    return String(msg.from?.id || "") === adminId;
   }
 
   function deny(msg) {
@@ -26,9 +32,14 @@ function startBot() {
     );
   }
 
-  // =========================
-  // START
-  // =========================
+  function cancelOperation(chatId) {
+    pending.delete(chatId);
+    editPending.delete(chatId);
+  }
+
+  // ==========================================
+  // /START
+  // ==========================================
 
   bot.onText(/^\/start$/, (msg) => {
     if (!isAdmin(msg)) return deny(msg);
@@ -41,17 +52,17 @@ function startBot() {
         "/add — Add a hackathon",
         "/list — List saved hackathons",
         "/edit ID — Edit a hackathon",
-        "/approve ID — Publish an event",
-        "/delete ID — Delete an event",
+        "/approve ID — Approve a hackathon",
+        "/delete ID — Delete a hackathon",
         "/cancel — Cancel current operation",
         "/help — Show help"
       ].join("\n")
     );
   });
 
-  // =========================
-  // HELP
-  // =========================
+  // ==========================================
+  // /HELP
+  // ==========================================
 
   bot.onText(/^\/help$/, (msg) => {
     if (!isAdmin(msg)) return deny(msg);
@@ -63,88 +74,299 @@ function startBot() {
         "",
         "/add — Add a new hackathon",
         "/list — List saved hackathons",
-        "/edit ID — Edit one field",
-        "/approve ID — Publish an event",
-        "/delete ID — Delete an event",
+        "/edit ID — Edit a hackathon",
+        "/approve ID — Approve a hackathon",
+        "/delete ID — Delete a hackathon",
         "/cancel — Cancel current operation"
       ].join("\n")
     );
   });
 
-  // =========================
-  // CANCEL
-  // =========================
+  // ==========================================
+  // /CANCEL
+  // ==========================================
 
   bot.onText(/^\/cancel$/, (msg) => {
     if (!isAdmin(msg)) return deny(msg);
 
-    pending.delete(msg.chat.id);
-    editPending.delete(msg.chat.id);
+    cancelOperation(msg.chat.id);
 
-    bot.sendMessage(msg.chat.id, "❌ Current operation cancelled.");
+    bot.sendMessage(
+      msg.chat.id,
+      "✅ Current operation cancelled."
+    );
   });
 
-  // =========================
-  // ADD
-  // =========================
+  // ==========================================
+  // /ADD
+  // ==========================================
 
   bot.onText(/^\/add$/, (msg) => {
     if (!isAdmin(msg)) return deny(msg);
 
+    cancelOperation(msg.chat.id);
+
     pending.set(msg.chat.id, {
-      step: 0,
-      values: {}
+      step: 1,
+      data: {}
     });
 
     bot.sendMessage(
       msg.chat.id,
-      "Let's add a hackathon.\n\n1/11 — What is the hackathon name?"
+      [
+        "➕ Add New Hackathon",
+        "",
+        "Step 1/11",
+        "Enter the hackathon name."
+      ].join("\n")
     );
   });
 
-  // =========================
-  // LIST
-  // =========================
+  // ==========================================
+  // /LIST
+  // ==========================================
 
   bot.onText(/^\/list$/, (msg) => {
     if (!isAdmin(msg)) return deny(msg);
 
-    const events = db.prepare(`
-      SELECT
-        id,
-        title,
-        city,
-        format,
-        status,
-        deadline,
-        team_size
-      FROM hackathons
-      ORDER BY id DESC
-      LIMIT 30
-    `).all();
+    const events = db
+      .prepare(`
+        SELECT
+          id,
+          title,
+          organizer,
+          city,
+          venue,
+          format,
+          event_date,
+          deadline,
+          registration_url,
+          eligibility,
+          team_size,
+          description,
+          status
+        FROM hackathons
+        ORDER BY id ASC
+      `)
+      .all();
 
-    if (!events.length) {
+    if (events.length === 0) {
       return bot.sendMessage(
         msg.chat.id,
-        "No hackathons saved yet."
+        "📭 No hackathons have been saved yet."
       );
     }
 
-    const text = events
-      .map((event) =>
-        `#${event.id} — ${event.title}\n` +
-        `${event.city} | ${event.format} | ${event.status}\n` +
-        `Team size: ${event.team_size || "Not set"}\n` +
-        `Deadline: ${event.deadline || "Not set"}`
-      )
-      .join("\n\n");
+    const lines = [
+      "📋 Saved Hackathons",
+      ""
+    ];
 
-    bot.sendMessage(msg.chat.id, text);
+    for (const event of events) {
+      lines.push(
+        `#${event.id} — ${event.title}`,
+        `Status: ${event.status}`,
+        `Organizer: ${event.organizer || "-"}`,
+        `City: ${event.city || "-"}`,
+        `Venue: ${event.venue || "-"}`,
+        `Format: ${event.format || "-"}`,
+        `Event date: ${event.event_date || "-"}`,
+        `Deadline: ${event.deadline || "-"}`,
+        `Eligibility: ${event.eligibility || "-"}`,
+        `Team size: ${event.team_size ? `${event.team_size} member(s)` : "-"}`,
+        ""
+      );
+    }
+
+    bot.sendMessage(
+      msg.chat.id,
+      lines.join("\n")
+    );
   });
 
-  // =========================
-  // EDIT
-  // =========================
+  // ==========================================
+  // /APPROVE
+  // ==========================================
+
+  bot.onText(/^\/approve\s+(\d+)$/, (msg, match) => {
+    if (!isAdmin(msg)) return deny(msg);
+
+    const id = Number(match[1]);
+
+    const event = db
+      .prepare(`
+        SELECT *
+        FROM hackathons
+        WHERE id = ?
+      `)
+      .get(id);
+
+    if (!event) {
+      return bot.sendMessage(
+        msg.chat.id,
+        `❌ Hackathon #${id} not found.`
+      );
+    }
+
+    if (event.status === "approved") {
+      return bot.sendMessage(
+        msg.chat.id,
+        `ℹ️ Hackathon #${id} is already approved.`
+      );
+    }
+
+    // BASIC INFORMATION
+    if (
+      !event.title ||
+      !event.organizer ||
+      !event.city
+    ) {
+      return bot.sendMessage(
+        msg.chat.id,
+        "❌ Cannot approve.\n\nRequired basic information is missing."
+      );
+    }
+
+    // JAIPUR ONLY
+    if (
+      !event.city
+        .toLowerCase()
+        .includes("jaipur")
+    ) {
+      return bot.sendMessage(
+        msg.chat.id,
+        "❌ Cannot approve.\n\nOnly Jaipur hackathons are published."
+      );
+    }
+
+    // PHYSICAL ONLY
+    if (
+      event.format.toLowerCase() !== "physical"
+    ) {
+      return bot.sendMessage(
+        msg.chat.id,
+        "❌ Cannot approve.\n\nOnly physical hackathons are published."
+      );
+    }
+
+    // REGISTRATION LINK
+    if (!event.registration_url) {
+      return bot.sendMessage(
+        msg.chat.id,
+        "❌ Cannot approve.\n\nRegistration link is missing."
+      );
+    }
+
+    // ELIGIBILITY
+    if (!event.eligibility) {
+      return bot.sendMessage(
+        msg.chat.id,
+        "❌ Cannot approve.\n\nEligibility is missing."
+      );
+    }
+
+    // UNCERTAIN = DRAFT
+    if (
+      event.eligibility ===
+      "UNCERTAIN / NEED VERIFICATION"
+    ) {
+      return bot.sendMessage(
+        msg.chat.id,
+        [
+          "⚠️ Cannot approve this hackathon.",
+          "",
+          "Eligibility is marked as uncertain.",
+          "",
+          `Use /edit ${id}`,
+          "and update the eligibility."
+        ].join("\n")
+      );
+    }
+
+    // TEAM SIZE
+    if (!event.team_size) {
+      return bot.sendMessage(
+        msg.chat.id,
+        "❌ Cannot approve.\n\nTeam size is missing."
+      );
+    }
+
+    const teamSize = Number(event.team_size);
+
+    if (
+      !Number.isInteger(teamSize) ||
+      teamSize < 1 ||
+      teamSize > 6
+    ) {
+      return bot.sendMessage(
+        msg.chat.id,
+        "❌ Cannot approve.\n\nTeam size must be between 1 and 6."
+      );
+    }
+
+    // APPROVE
+    db.prepare(`
+      UPDATE hackathons
+      SET status = 'approved'
+      WHERE id = ?
+    `).run(id);
+
+    bot.sendMessage(
+      msg.chat.id,
+      [
+        "✅ HACKATHON APPROVED",
+        "",
+        `ID: #${event.id}`,
+        `Name: ${event.title}`,
+        `Organizer: ${event.organizer}`,
+        `City: ${event.city}`,
+        `Format: ${event.format}`,
+        `Eligibility: ${event.eligibility}`,
+        `Team size: ${event.team_size} member(s)`,
+        "",
+        "The hackathon can now appear on the website."
+      ].join("\n")
+    );
+  });
+
+  // ==========================================
+  // /DELETE
+  // ==========================================
+
+  bot.onText(/^\/delete\s+(\d+)$/, (msg, match) => {
+    if (!isAdmin(msg)) return deny(msg);
+
+    const id = Number(match[1]);
+
+    const event = db
+      .prepare(`
+        SELECT id, title
+        FROM hackathons
+        WHERE id = ?
+      `)
+      .get(id);
+
+    if (!event) {
+      return bot.sendMessage(
+        msg.chat.id,
+        `❌ Hackathon #${id} not found.`
+      );
+    }
+
+    db.prepare(`
+      DELETE FROM hackathons
+      WHERE id = ?
+    `).run(id);
+
+    bot.sendMessage(
+      msg.chat.id,
+      `🗑️ Hackathon #${id} deleted successfully.`
+    );
+  });
+
+  // ==========================================
+  // /EDIT
+  // ==========================================
 
   bot.onText(/^\/edit\s+(\d+)$/, (msg, match) => {
     if (!isAdmin(msg)) return deny(msg);
@@ -152,19 +374,26 @@ function startBot() {
     const id = Number(match[1]);
 
     const event = db
-      .prepare("SELECT * FROM hackathons WHERE id = ?")
+      .prepare(`
+        SELECT *
+        FROM hackathons
+        WHERE id = ?
+      `)
       .get(id);
 
     if (!event) {
       return bot.sendMessage(
         msg.chat.id,
-        "❌ Hackathon ID not found."
+        `❌ Hackathon #${id} not found.`
       );
     }
 
+    cancelOperation(msg.chat.id);
+
     editPending.set(msg.chat.id, {
       id,
-      step: 0
+      step: 1,
+      field: null
     });
 
     bot.sendMessage(
@@ -172,9 +401,7 @@ function startBot() {
       [
         `✏️ Editing Hackathon #${id}`,
         "",
-        `Current name: ${event.title}`,
-        "",
-        "Which field do you want to change?",
+        "Select the field you want to change:",
         "",
         "1. Hackathon name",
         "2. Organizer",
@@ -188,340 +415,467 @@ function startBot() {
         "10. Team size",
         "11. Description",
         "",
-        "Reply with a number from 1 to 11.",
-        "",
-        "Use /cancel to cancel."
+        "Reply with a number from 1 to 11."
       ].join("\n")
     );
   });
 
-  // =========================
-  // APPROVE
-  // =========================
-
-  bot.onText(/^\/approve\s+(\d+)$/, (msg, match) => {
-    if (!isAdmin(msg)) return deny(msg);
-
-    const id = Number(match[1]);
-
-    const event = db
-      .prepare("SELECT * FROM hackathons WHERE id = ?")
-      .get(id);
-
-    if (!event) {
-      return bot.sendMessage(
-        msg.chat.id,
-        "❌ Hackathon ID not found."
-      );
-    }
-
-    const eligible =
-      event.city.toLowerCase().includes("jaipur") &&
-      event.format.toLowerCase() === "physical" &&
-      event.eligibility.trim().length > 0 &&
-      event.registration_url.trim().length > 0;
-
-    if (!eligible) {
-      return bot.sendMessage(
-        msg.chat.id,
-        [
-          "❌ Cannot approve yet.",
-          "",
-          "Check that:",
-          "• Event is physical",
-          "• Event is in Jaipur",
-          "• Eligibility is filled",
-          "• Registration URL is filled"
-        ].join("\n")
-      );
-    }
-
-    db.prepare(
-      "UPDATE hackathons SET status = 'approved' WHERE id = ?"
-    ).run(id);
-
-    bot.sendMessage(
-      msg.chat.id,
-      `✅ Hackathon #${id} approved.`
-    );
-  });
-
-  // =========================
-  // DELETE
-  // =========================
-
-  bot.onText(/^\/delete\s+(\d+)$/, (msg, match) => {
-    if (!isAdmin(msg)) return deny(msg);
-
-    const id = Number(match[1]);
-
-    const result = db
-      .prepare("DELETE FROM hackathons WHERE id = ?")
-      .run(id);
-
-    bot.sendMessage(
-      msg.chat.id,
-      result.changes
-        ? `🗑️ Deleted hackathon #${id}.`
-        : "❌ Hackathon ID not found."
-    );
-  });
-
-  // =========================
-  // ADD QUESTIONS
-  // =========================
-
-  const questions = [
-    "1/11 — Hackathon name?",
-
-    "2/11 — Organizer name?",
-
-    "3/11 — City? Enter Jaipur if it is in Jaipur.",
-
-    "4/11 — Venue/address?",
-
-    "5/11 — Format? Reply exactly: physical or online.",
-
-    "6/11 — Event date? Use YYYY-MM-DD or a date range.",
-
-    "7/11 — Registration deadline? Use YYYY-MM-DD.",
-
-    "8/11 — Registration URL?",
-
-    "9/11 — Eligibility? For example: Open to all college students.",
-
-    "10/11 — Team size? For example: 1-6 members.",
-
-    "11/11 — Short description?"
-  ];
-
-  const fields = [
-    "title",
-    "organizer",
-    "city",
-    "venue",
-    "format",
-    "event_date",
-    "deadline",
-    "registration_url",
-    "eligibility",
-    "team_size",
-    "description"
-  ];
-
-  // =========================
-  // MESSAGE HANDLER
-  // =========================
+  // ==========================================
+  // GENERAL MESSAGE HANDLER
+  // ==========================================
 
   bot.on("message", (msg) => {
-    if (!msg.text || msg.text.startsWith("/")) return;
+    if (!msg.text) return;
     if (!isAdmin(msg)) return;
 
-    const value = msg.text.trim();
+    const text = msg.text.trim();
 
-    // -------------------------
-    // EDIT FLOW
-    // -------------------------
+    // Ignore commands
+    if (text.startsWith("/")) return;
 
-    const edit = editPending.get(msg.chat.id);
+    const chatId = msg.chat.id;
 
-    if (edit) {
-      // Choose field
-      if (edit.step === 0) {
-        const fieldNumber = Number(value);
+    // ========================================
+    // ADD FLOW
+    // ========================================
 
-        if (
-          !Number.isInteger(fieldNumber) ||
-          fieldNumber < 1 ||
-          fieldNumber > 11
-        ) {
-          return bot.sendMessage(
-            msg.chat.id,
-            "Please choose a number from 1 to 11."
-          );
-        }
+    const add = pending.get(chatId);
 
-        edit.field = fields[fieldNumber - 1];
-        edit.step = 1;
+    if (add) {
 
-        const labels = {
-          title: "hackathon name",
-          organizer: "organizer name",
-          city: "city",
-          venue: "venue/address",
-          format: "format (physical or online)",
-          event_date: "event date",
-          deadline: "registration deadline",
-          registration_url: "registration URL",
-          eligibility: "eligibility",
-          team_size: "team size",
-          description: "short description"
-        };
+      // STEP 1
+      if (add.step === 1) {
+        add.data.title = text;
+        add.step = 2;
 
         return bot.sendMessage(
-          msg.chat.id,
-          `✏️ Enter the new ${labels[edit.field]}:`
+          chatId,
+          "Step 2/11\nEnter the organizer name."
         );
       }
 
-      // Enter new value
-      if (edit.step === 1) {
-        if (
-          edit.field === "format" &&
-          !["physical", "online"].includes(value.toLowerCase())
-        ) {
-          return bot.sendMessage(
-            msg.chat.id,
-            "Reply with physical or online."
-          );
-        }
-
-        if (
-          edit.field === "registration_url" &&
-          !/^https?:\/\/\S+/i.test(value)
-        ) {
-          return bot.sendMessage(
-            msg.chat.id,
-            "Please enter a valid URL beginning with http:// or https://."
-          );
-        }
-
-        const allowedFields = [
-          "title",
-          "organizer",
-          "city",
-          "venue",
-          "format",
-          "event_date",
-          "deadline",
-          "registration_url",
-          "eligibility",
-          "team_size",
-          "description"
-        ];
-
-        if (!allowedFields.includes(edit.field)) {
-          editPending.delete(msg.chat.id);
-
-          return bot.sendMessage(
-            msg.chat.id,
-            "❌ Invalid field."
-          );
-        }
-
-        db.prepare(
-          `UPDATE hackathons SET ${edit.field} = ? WHERE id = ?`
-        ).run(value, edit.id);
-
-        editPending.delete(msg.chat.id);
+      // STEP 2
+      if (add.step === 2) {
+        add.data.organizer = text;
+        add.step = 3;
 
         return bot.sendMessage(
-          msg.chat.id,
+          chatId,
+          "Step 3/11\nEnter the city."
+        );
+      }
+
+      // STEP 3
+      if (add.step === 3) {
+        add.data.city = text;
+        add.step = 4;
+
+        return bot.sendMessage(
+          chatId,
+          "Step 4/11\nEnter the venue/address."
+        );
+      }
+
+      // STEP 4
+      if (add.step === 4) {
+        add.data.venue = text;
+        add.step = 5;
+
+        return bot.sendMessage(
+          chatId,
           [
-            `✅ Hackathon #${edit.id} updated!`,
+            "Step 5/11",
+            "Enter the format.",
             "",
-            `Changed: ${edit.field}`,
-            `New value: ${value}`
+            "physical",
+            "or",
+            "online"
+          ].join("\n")
+        );
+      }
+
+      // STEP 5
+      if (add.step === 5) {
+
+        const format = text.toLowerCase();
+
+        if (
+          format !== "physical" &&
+          format !== "online"
+        ) {
+          return bot.sendMessage(
+            chatId,
+            "❌ Please reply with physical or online."
+          );
+        }
+
+        add.data.format = format;
+        add.step = 6;
+
+        return bot.sendMessage(
+          chatId,
+          "Step 6/11\nEnter the event date."
+        );
+      }
+
+      // STEP 6
+      if (add.step === 6) {
+        add.data.event_date = text;
+        add.step = 7;
+
+        return bot.sendMessage(
+          chatId,
+          "Step 7/11\nEnter the registration deadline."
+        );
+      }
+
+      // STEP 7
+      if (add.step === 7) {
+        add.data.deadline = text;
+        add.step = 8;
+
+        return bot.sendMessage(
+          chatId,
+          "Step 8/11\nEnter the registration URL."
+        );
+      }
+
+      // STEP 8
+      // REGISTRATION LINK
+      if (add.step === 8) {
+
+        if (!text) {
+          return bot.sendMessage(
+            chatId,
+            "❌ Registration link cannot be empty. Send it again."
+          );
+        }
+
+        add.data.registration_url = text;
+        add.step = 9;
+
+        return bot.sendMessage(
+          chatId,
+          [
+            "Step 9/11",
+            "Select eligibility:",
+            "",
+            "1️⃣ OPEN FOR ALL",
+            "2️⃣ ONLY FOR JECRC STUDENTS",
+            "3️⃣ UNCERTAIN / NEED VERIFICATION",
+            "",
+            "Reply with 1, 2 or 3."
+          ].join("\n")
+        );
+      }
+
+      // STEP 9
+      if (add.step === 9) {
+
+        const eligibilityMap = {
+          "1": "OPEN FOR ALL",
+          "2": "ONLY FOR JECRC STUDENTS",
+          "3": "UNCERTAIN / NEED VERIFICATION"
+        };
+
+        if (!eligibilityMap[text]) {
+          return bot.sendMessage(
+            chatId,
+            "❌ Please reply with 1, 2 or 3."
+          );
+        }
+
+        add.data.eligibility =
+          eligibilityMap[text];
+
+        add.step = 10;
+
+        return bot.sendMessage(
+          chatId,
+          [
+            "Step 10/11",
+            "Enter the maximum team size.",
+            "",
+            "Enter a number from 1 to 6."
+          ].join("\n")
+        );
+      }
+
+      // STEP 10
+      if (add.step === 10) {
+
+        const teamSize = Number(text);
+
+        if (
+          !Number.isInteger(teamSize) ||
+          teamSize < 1 ||
+          teamSize > 6
+        ) {
+          return bot.sendMessage(
+            chatId,
+            "❌ Team size must be a number from 1 to 6."
+          );
+        }
+
+        add.data.team_size = String(teamSize);
+        add.step = 11;
+
+        return bot.sendMessage(
+          chatId,
+          "Step 11/11\nEnter a short description."
+        );
+      }
+
+      // STEP 11
+      if (add.step === 11) {
+
+        add.data.description = text;
+
+        const d = add.data;
+
+        const result = db.prepare(`
+          INSERT INTO hackathons (
+            title,
+            organizer,
+            city,
+            venue,
+            format,
+            event_date,
+            deadline,
+            registration_url,
+            eligibility,
+            team_size,
+            description,
+            status
+          )
+          VALUES (
+            @title,
+            @organizer,
+            @city,
+            @venue,
+            @format,
+            @event_date,
+            @deadline,
+            @registration_url,
+            @eligibility,
+            @team_size,
+            @description,
+            'draft'
+          )
+        `).run(d);
+
+        pending.delete(chatId);
+
+        return bot.sendMessage(
+          chatId,
+          [
+            "✅ HACKATHON SAVED AS DRAFT",
+            "",
+            `ID: #${result.lastInsertRowid}`,
+            `Name: ${d.title}`,
+            `Organizer: ${d.organizer}`,
+            `City: ${d.city}`,
+            `Venue: ${d.venue}`,
+            `Format: ${d.format}`,
+            `Event date: ${d.event_date}`,
+            `Deadline: ${d.deadline}`,
+            `Eligibility: ${d.eligibility}`,
+            `Team size: ${d.team_size} member(s)`,
+            "",
+            `Use /approve ${result.lastInsertRowid} after verification.`
           ].join("\n")
         );
       }
     }
 
-    // -------------------------
-    // ADD FLOW
-    // -------------------------
+    // ========================================
+    // EDIT FLOW
+    // ========================================
 
-    const entry = pending.get(msg.chat.id);
+    const edit = editPending.get(chatId);
 
-    if (!entry) return;
+    if (!edit) return;
 
-    const field = fields[entry.step];
+    // FIELD SELECTION
+    if (edit.step === 1) {
 
-    if (
-      field === "format" &&
-      !["physical", "online"].includes(value.toLowerCase())
-    ) {
+      const fieldMap = {
+        "1": "title",
+        "2": "organizer",
+        "3": "city",
+        "4": "venue",
+        "5": "format",
+        "6": "event_date",
+        "7": "deadline",
+        "8": "registration_url",
+        "9": "eligibility",
+        "10": "team_size",
+        "11": "description"
+      };
+
+      const field = fieldMap[text];
+
+      if (!field) {
+        return bot.sendMessage(
+          chatId,
+          "❌ Please reply with a number from 1 to 11."
+        );
+      }
+
+      edit.field = field;
+      edit.step = 2;
+
       return bot.sendMessage(
-        msg.chat.id,
-        "Reply with physical or online."
+        chatId,
+        `Enter the new value for ${field}.`
       );
     }
 
-    if (
-      field === "registration_url" &&
-      !/^https?:\/\/\S+/i.test(value)
-    ) {
+    // NEW VALUE
+    if (edit.step === 2) {
+
+      // FORMAT
+      if (edit.field === "format") {
+
+        const format = text.toLowerCase();
+
+        if (
+          format !== "physical" &&
+          format !== "online"
+        ) {
+          return bot.sendMessage(
+            chatId,
+            "❌ Format must be physical or online."
+          );
+        }
+
+        edit.value = format;
+      }
+
+      // REGISTRATION URL
+      else if (
+        edit.field === "registration_url"
+      ) {
+
+        if (!text) {
+          return bot.sendMessage(
+            chatId,
+            "❌ Registration link cannot be empty."
+          );
+        }
+
+        edit.value = text;
+      }
+
+      // ELIGIBILITY
+      else if (
+        edit.field === "eligibility"
+      ) {
+
+        const eligibilityMap = {
+          "1": "OPEN FOR ALL",
+          "2": "ONLY FOR JECRC STUDENTS",
+          "3": "UNCERTAIN / NEED VERIFICATION"
+        };
+
+        if (!eligibilityMap[text]) {
+          return bot.sendMessage(
+            chatId,
+            "❌ Reply with 1, 2 or 3."
+          );
+        }
+
+        edit.value =
+          eligibilityMap[text];
+      }
+
+      // TEAM SIZE
+      else if (
+        edit.field === "team_size"
+      ) {
+
+        const teamSize = Number(text);
+
+        if (
+          !Number.isInteger(teamSize) ||
+          teamSize < 1 ||
+          teamSize > 6
+        ) {
+          return bot.sendMessage(
+            chatId,
+            "❌ Team size must be a number from 1 to 6."
+          );
+        }
+
+        edit.value = String(teamSize);
+      }
+
+      // OTHER FIELDS
+      else {
+        edit.value = text;
+      }
+
+      const allowedFields = [
+        "title",
+        "organizer",
+        "city",
+        "venue",
+        "format",
+        "event_date",
+        "deadline",
+        "registration_url",
+        "eligibility",
+        "team_size",
+        "description"
+      ];
+
+      if (!allowedFields.includes(edit.field)) {
+        editPending.delete(chatId);
+
+        return bot.sendMessage(
+          chatId,
+          "❌ Invalid field."
+        );
+      }
+
+      db.prepare(`
+        UPDATE hackathons
+        SET ${edit.field} = ?
+        WHERE id = ?
+      `).run(
+        edit.value,
+        edit.id
+      );
+
+      // Re-check after every edit
+      db.prepare(`
+        UPDATE hackathons
+        SET status = 'draft'
+        WHERE id = ?
+      `).run(edit.id);
+
+      editPending.delete(chatId);
+
       return bot.sendMessage(
-        msg.chat.id,
-        "Please enter a valid URL beginning with http:// or https://."
+        chatId,
+        [
+          "✅ Hackathon updated.",
+          "",
+          `ID: #${edit.id}`,
+          `Changed field: ${edit.field}`,
+          `New value: ${edit.value}`,
+          "",
+          "Status changed back to DRAFT.",
+          "",
+          `Use /approve ${edit.id} after checking it.`
+        ].join("\n")
       );
     }
-
-    entry.values[field] = value;
-    entry.step += 1;
-
-    if (entry.step < questions.length) {
-      return bot.sendMessage(
-        msg.chat.id,
-        questions[entry.step]
-      );
-    }
-
-    // -------------------------
-    // SAVE TO DATABASE
-    // -------------------------
-
-    const result = db.prepare(`
-      INSERT INTO hackathons (
-        title,
-        organizer,
-        city,
-        venue,
-        format,
-        event_date,
-        deadline,
-        registration_url,
-        eligibility,
-        team_size,
-        description,
-        status
-      )
-      VALUES (
-        @title,
-        @organizer,
-        @city,
-        @venue,
-        @format,
-        @event_date,
-        @deadline,
-        @registration_url,
-        @eligibility,
-        @team_size,
-        @description,
-        'draft'
-      )
-    `).run(entry.values);
-
-    pending.delete(msg.chat.id);
-
-    bot.sendMessage(
-      msg.chat.id,
-      [
-        "📝 Saved as Draft!",
-        "",
-        `ID: ${result.lastInsertRowid}`,
-        `Name: ${entry.values.title}`,
-        `Team size: ${entry.values.team_size}`,
-        "",
-        `Review with /list`,
-        `Publish with /approve ${result.lastInsertRowid}`
-      ].join("\n")
-    );
   });
 
-  // =========================
-  // POLLING ERROR
-  // =========================
+  // ==========================================
+  // TELEGRAM ERRORS
+  // ==========================================
 
   bot.on("polling_error", (error) => {
     console.error(
@@ -530,9 +884,14 @@ function startBot() {
     );
   });
 
-  console.log("Telegram bot is running.");
+  bot.on("error", (error) => {
+    console.error(
+      "Telegram bot error:",
+      error.message
+    );
+  });
 
-  return bot;
+  console.log("Telegram bot is running.");
 }
 
 module.exports = startBot;

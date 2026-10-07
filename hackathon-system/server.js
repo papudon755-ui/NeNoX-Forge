@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 
 const express = require("express");
@@ -8,7 +7,6 @@ const startBot = require("./bot");
 
 const app = express();
 
-// Middleware
 app.use(express.json());
 
 app.use(cors({
@@ -22,7 +20,10 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
 
-// Health Check
+// =========================================================
+// HEALTH
+// =========================================================
+
 app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
@@ -30,7 +31,10 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Get Approved Jaipur Physical Hackathons
+// =========================================================
+// HACKATHONS
+// =========================================================
+
 app.get("/api/hackathons", (req, res) => {
   try {
     const events = db.prepare(`
@@ -45,12 +49,18 @@ app.get("/api/hackathons", (req, res) => {
         deadline,
         registration_url,
         eligibility,
+        team_size,
         description
       FROM hackathons
       WHERE status = 'approved'
         AND lower(city) LIKE '%jaipur%'
         AND lower(format) = 'physical'
-      ORDER BY event_date ASC
+      ORDER BY
+        CASE
+          WHEN event_date = '' OR event_date = 'TBA' THEN 1
+          ELSE 0
+        END,
+        event_date ASC
     `).all();
 
     res.json(events);
@@ -64,7 +74,10 @@ app.get("/api/hackathons", (req, res) => {
   }
 });
 
-// Start Server
+// =========================================================
+// SERVER
+// =========================================================
+
 const PORT = Number(process.env.PORT || 3001);
 
 app.listen(PORT, () => {
