@@ -10,6 +10,11 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
 
+<!-- fetch the logo video with HIGH priority during parse, so its first frame
+     is ready the moment the splash paints. The 3 <video data-logo> tags below
+     all share this single download via the HTTP cache (no triple download). -->
+<link rel="preload" href="logo.mp4" as="video" type="video/mp4" fetchpriority="high">
+
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -25,7 +30,9 @@ position:relative;
 transform:translate3d(0,0,0) scale(1);
 transform-origin:center center;
 transition:transform .45s var(--ease-out),background-color .2s ease,color .2s ease;
-will-change:transform;
+/* NOTE: no will-change here on purpose. Putting will-change on every card
+   forces the GPU to keep dozens of layers alive = the main cause of the
+   "freezes then runs" jank. It is added only while a card is animating. */
 backface-visibility:hidden;
 -webkit-backface-visibility:hidden;
 -webkit-tap-highlight-color:transparent;
@@ -45,6 +52,7 @@ border:1px solid rgba(220,38,38,.8);box-shadow:0 6px 18px rgba(220,38,38,.28)
 /* DESKTOP hover: zoom-in is quick, zoom-out is a little softer */
 @media(hover:hover) and (pointer:fine){
 .zoom-card:hover,.zoom-item:hover{
+will-change:transform;
 transform:translate3d(0,0,0) scale(var(--z));
 transition:transform .38s var(--ease-in),background-color .2s ease,color .2s ease
 }
@@ -57,6 +65,7 @@ transition:transform .38s var(--ease-in),background-color .2s ease,color .2s eas
 .zoom-item{--z:1.02}
 .zoom-lg{--z:1.012}
 .zoom-card.is-active,.zoom-item.is-active{
+will-change:transform;
 transform:translate3d(0,0,0) scale(var(--z));
 transition:transform .45s var(--ease-in),background-color .2s ease,color .2s ease
 }
@@ -65,6 +74,7 @@ transition:transform .45s var(--ease-in),background-color .2s ease,color .2s eas
 
 /* CLICK / TAP: reacts on the first frame */
 .zoom-card:active,.zoom-item:active,.zoom-card.is-pressed,.zoom-item.is-pressed{
+will-change:transform;
 transform:translate3d(0,0,0) scale(var(--z));
 transition:transform .15s var(--ease-in),background-color .2s ease,color .2s ease
 }
@@ -73,6 +83,9 @@ opacity:1;transition:opacity .15s ease-out
 }
 
 .zoom-card:focus-visible{outline:2px solid rgba(248,113,113,.9);outline-offset:3px}
+
+/* below-fold sections skip layout/paint until near the viewport = faster load, smoother scroll */
+#roles,#recent,#apply{content-visibility:auto;contain-intrinsic-size:auto 900px}
 
 @media(prefers-reduced-motion:reduce){
 *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
@@ -84,7 +97,7 @@ opacity:1;transition:opacity .15s ease-out
 
 <div id="splash-screen" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center">
 <div class="flex flex-col items-center space-y-4">
-<video src="logo.mp4" autoplay loop muted playsinline class="h-36 w-36 rounded-full border-2 border-red-600/60 object-cover shadow-[0_0_50px_rgba(220,38,38,0.5)]"></video>
+<video data-logo src="logo.mp4" autoplay loop muted playsinline preload="auto" disablepictureinpicture aria-hidden="true" class="h-36 w-36 rounded-full border-2 border-red-600/60 object-cover shadow-[0_0_50px_rgba(220,38,38,0.5)]"></video>
 <span class="text-2xl font-extrabold tracking-widest text-white uppercase">NeNoX Forge</span>
 </div>
 </div>
@@ -94,7 +107,7 @@ opacity:1;transition:opacity .15s ease-out
 <nav class="sticky top-0 z-50 bg-black/95 border-b border-red-900/40">
 <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 <a href="./intro.html" aria-label="NeNoX Forge Home" class="flex items-center space-x-3">
-<video src="logo.mp4" autoplay loop muted playsinline class="pointer-events-none h-10 w-10 rounded-full border border-red-600/60 object-cover shadow-sm"></video>
+<video data-logo src="logo.mp4" autoplay loop muted playsinline preload="auto" disablepictureinpicture aria-hidden="true" class="pointer-events-none h-10 w-10 rounded-full border border-red-600/60 object-cover shadow-sm"></video>
 <span class="font-bold text-xl tracking-wider text-white">NeNoX Forge</span>
 </a>
 <a href="https://discord.gg/tYzSBzRZGE" target="_blank" rel="noopener noreferrer" class="zoom-card flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg shadow-lg shadow-indigo-600/30">
@@ -106,7 +119,8 @@ opacity:1;transition:opacity .15s ease-out
 
 <header class="relative min-h-[calc(100vh-80px)] flex items-center justify-center px-6 py-12 overflow-hidden">
 
-<video id="bg-video" src="bg-video.mp4" autoplay loop muted playsinline disablepictureinpicture class="absolute inset-0 w-full h-full object-cover z-0 opacity-60"></video>
+<!-- heavy bg video loads AFTER the logo is playing, so it never steals its bandwidth -->
+<video id="bg-video" data-src="bg-video.mp4" preload="none" autoplay loop muted playsinline disablepictureinpicture class="absolute inset-0 w-full h-full object-cover z-0 opacity-60"></video>
 
 <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-red-950/40 z-0"></div>
 <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(185,28,28,0.15)_0%,transparent_70%)] z-0"></div>
@@ -128,7 +142,7 @@ Here's the deal: When you hit a wall or face a tough technical challenge, we've 
 <div class="relative group">
 <!-- glow: opacity-only transition (the old one animated the blur filter for 1s = laggy) -->
 <div class="absolute -inset-1 bg-gradient-to-r from-red-600 to-rose-700 rounded-full blur-xl opacity-50 group-hover:opacity-80 transition-opacity duration-300 transform-gpu"></div>
-<video src="logo.mp4" autoplay loop muted playsinline class="relative h-64 w-64 sm:h-72 sm:w-72 rounded-full object-cover border-2 border-red-600/80 shadow-2xl shadow-red-900/50"></video>
+<video data-logo src="logo.mp4" autoplay loop muted playsinline preload="auto" disablepictureinpicture aria-hidden="true" class="relative h-64 w-64 sm:h-72 sm:w-72 rounded-full object-cover border-2 border-red-600/80 shadow-2xl shadow-red-900/50"></video>
 </div>
 </div>
 
@@ -334,23 +348,94 @@ Here's the deal: When you hit a wall or face a tough technical challenge, we've 
 <audio id="bg-music" loop preload="none"><source src="ambient.mp3" type="audio/mpeg"></audio>
 
 <script>
-/* ---------- SPLASH: hides as soon as page is loaded (min 700ms so the logo is seen) ---------- */
+/* ---------- SPLASH: shows the logo for a beat, then gets out of the way ----------
+   Old version waited for the full window "load" event, which the heavy
+   background video could delay for seconds. Now it hides on its own timer
+   (min display + hard cap), so a slow asset can never trap the user. */
 (function(){
   const splash=document.getElementById('splash-screen');
-  const MIN=1700;
+  if(!splash)return;
+  const t0=performance.now();
+  const MIN=1200, MAX=5000;
+  let hidden=false;
   function hide(){
+    if(hidden)return;
+    hidden=true;
     splash.style.opacity='0';
     splash.style.visibility='hidden';
     setTimeout(()=>{
-      const v=splash.querySelector('video');
-      if(v){v.pause();v.removeAttribute('src');v.load();}
+      splash.querySelectorAll('video').forEach(v=>{try{v.pause();v.removeAttribute('src');v.load();}catch(e){}});
       splash.remove();
     },320);
   }
-  window.addEventListener('load',()=>setTimeout(hide,Math.max(0,MIN-performance.now())));
+  setTimeout(hide,MIN);                                   // minimum brand moment
+  setTimeout(hide,MAX);                                   // hard cap, never trap
+  window.addEventListener('load',()=>setTimeout(hide,Math.max(0,MIN-(performance.now()-t0))));
 })();
+</script>
 
-/* ---------- MUSIC + VIDEO ---------- */
+<script>
+/* ---------- LOGO VIDEOS: instant start + perfect sync, no freezing ----------
+   All three logo spots (splash, navbar, hero) share ONE download of logo.mp4
+   (the <link rel="preload"> in <head> + browser HTTP cache). This script:
+   1. waits until every logo video can show its first frame,
+   2. resets them all to 0 and presses play in the same animation frame,
+   3. re-syncs any drift every 1.5s, and re-syncs after tab switches
+      (the classic cause of "freezes, then runs out of sync"). */
+document.addEventListener('DOMContentLoaded',()=>{
+  const logos=[...document.querySelectorAll('video[data-logo]')];
+  if(!logos.length)return;
+  logos.forEach(v=>{
+    v.muted=true;v.loop=true;v.playsInline=true;v.preload='auto';
+    v.setAttribute('aria-hidden','true');
+    try{v.disablePictureInPicture=true;}catch(e){}
+  });
+
+  let started=false;
+  const startTogether=()=>{
+    if(started)return;
+    if(!logos.every(v=>v.readyState>=2))return;  // HAVE_CURRENT_DATA on all
+    started=true;
+    logos.forEach(v=>{try{v.currentTime=0;}catch(e){}});
+    requestAnimationFrame(()=>logos.forEach(v=>v.play().catch(()=>{})));
+  };
+  logos.forEach(v=>{
+    v.addEventListener('canplay',startTogether);
+    v.addEventListener('loadeddata',startTogether);
+    v.addEventListener('error',()=>{started=true;});  // one broken file must not block the others
+  });
+  setTimeout(()=>{                                       // safety net: never wait forever
+    if(started)return;
+    started=true;
+    logos.forEach(v=>v.play().catch(()=>{}));
+  },6000);
+
+  /* drift correction: if any logo is >0.25s off the reference, snap it back */
+  setInterval(()=>{
+    if(document.hidden||!started)return;
+    const ref=logos[0];
+    if(ref.paused||ref.readyState<2)return;
+    const t=ref.currentTime;
+    logos.forEach(v=>{
+      if(v!==ref&&v.readyState>=2&&Math.abs(v.currentTime-t)>0.25){
+        try{v.currentTime=t;}catch(e){}
+      }
+    });
+  },1500);
+
+  /* tab switch: pause everything, resume in sync on return */
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){logos.forEach(v=>v.pause());}
+    else if(started){
+      try{logos.forEach(v=>{if(v.readyState>=2)v.currentTime=logos[0].currentTime;});}catch(e){}
+      logos.forEach(v=>v.play().catch(()=>{}));
+    }
+  });
+});
+</script>
+
+<script>
+/* ---------- MUSIC + DEFERRED BACKGROUND VIDEO ---------- */
 document.addEventListener('DOMContentLoaded',()=>{
   const music=document.getElementById('bg-music');
   const btn=document.getElementById('music-toggle');
@@ -370,23 +455,29 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
   });
 
-  /* heavy background video: skip it on Data Saver or reduced-motion devices */
+  /* heavy background video: loads only AFTER the page (and logo) is up,
+     so it never competes for bandwidth with logo.mp4 on first paint.
+     Skipped entirely on Data Saver / reduced-motion devices. */
   const bg=document.getElementById('bg-video');
   const saveData=navigator.connection&&navigator.connection.saveData;
-  if(bg&&(saveData||matchMedia('(prefers-reduced-motion: reduce)').matches)){bg.remove();}
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!bg)return;
+  if(saveData||reduced){bg.remove();return;}
 
-  /* pause off-screen videos (except logos, which stay in sync) */
-  const videoObs=new IntersectionObserver(entries=>entries.forEach(e=>{
-    if(e.isIntersecting)e.target.play().catch(()=>{});else e.target.pause();
-  }),{threshold:.05});
-  document.querySelectorAll('video:not([src="logo.mp4"])').forEach(v=>videoObs.observe(v));
+  const kick=()=>{
+    if(!bg.isConnected||bg.src)return;
+    bg.src=bg.dataset.src;
+    bg.load();
+    bg.play().catch(()=>{});
+  };
+  if(document.readyState==='complete')setTimeout(kick,1200);
+  else window.addEventListener('load',()=>setTimeout(kick,1200));
 
-  /* logo videos */
-  document.querySelectorAll('video[src="logo.mp4"]').forEach(v=>{
-    v.loop=true;v.muted=true;v.playsInline=true;v.setAttribute('aria-hidden','true');
-    const play=()=>v.play().catch(()=>{});
-    if(v.readyState>=2)play();else v.addEventListener('loadeddata',play,{once:true});
-  });
+  /* pause the bg video when it scrolls off-screen (saves battery + GPU) */
+  new IntersectionObserver(entries=>entries.forEach(e=>{
+    if(!bg.isConnected)return;
+    if(e.isIntersecting)bg.play().catch(()=>{});else bg.pause();
+  }),{threshold:.05}).observe(bg);
 });
 </script>
 
