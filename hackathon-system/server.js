@@ -13,10 +13,13 @@ app.use(express.json());
 
 app.use(cors({
   origin: [
-    "https://aesthetic-stardust-3cb51a.netlify.app",
+    "https://papudon755-ui.github.io",
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5500",
     "http://127.0.0.1:5500"
-  ]
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
 
 // Health Check
