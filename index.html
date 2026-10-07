@@ -27,6 +27,8 @@
 html{background:#000}
 #splash-screen{position:fixed;top:0;right:0;bottom:0;left:0;z-index:100;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .3s ease,visibility .3s ease}
 #splash-screen .splash-inner{display:flex;flex-direction:column;align-items:center;gap:1rem}
+/* logo sits at the exact center from the first paint: no entrance motion,
+   the video animation simply plays there, wrapped in the glow pulse */
 #splash-screen canvas{width:144px;height:144px;border-radius:9999px;border:2px solid rgba(220,38,38,.6);background:#050505;box-shadow:0 0 50px rgba(220,38,38,.5);animation:splashPulse 1.6s ease-in-out infinite}
 #splash-screen .splash-title{font-family:ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:.2em;color:#fff;text-transform:uppercase}
 @keyframes splashPulse{0%,100%{box-shadow:0 0 25px rgba(220,38,38,.35)}50%{box-shadow:0 0 60px rgba(220,38,38,.75)}}
@@ -367,16 +369,17 @@ Here's the deal: When you hit a wall or face a tough technical challenge, we've 
 <audio id="bg-music" loop preload="none"><source src="ambient.mp3" type="audio/mpeg"></audio>
 
 <script>
-/* ---------- SPLASH: shows the logo for a beat, then gets out of the way ----------
-   Old version waited for the full window "load" event, which the heavy
-   background video could delay for seconds. Now it hides on its own timer
-   (min display + hard cap), so a slow asset can never trap the user. */
+/* ---------- SPLASH: 2.75-second brand intro, then reveals the site ----------
+   Shows the logo animation for ~2.75 seconds from the moment the page
+   starts loading, then lifts only once the page itself has finished loading
+   (so the complete website is underneath). Hard cap so a stalled asset can
+   never trap the visitor. */
 (function(){
   const splash=document.getElementById('splash-screen');
   if(!splash)return;
   const t0=performance.now();
-  const MIN=1200, MAX=5000;
-  let hidden=false;
+  const SHOW=2750, CAP=12000;
+  let hidden=false, loaded=document.readyState==='complete';
   function hide(){
     if(hidden)return;
     hidden=true;
@@ -384,9 +387,12 @@ Here's the deal: When you hit a wall or face a tough technical challenge, we've 
     splash.style.visibility='hidden';
     setTimeout(()=>splash.remove(),320);   // splash holds only a canvas; the single master video lives outside it and keeps playing
   }
-  setTimeout(hide,MIN);                                   // minimum brand moment
-  setTimeout(hide,MAX);                                   // hard cap, never trap
-  window.addEventListener('load',()=>setTimeout(hide,Math.max(0,MIN-(performance.now()-t0))));
+  function maybeHide(){
+    if(!hidden&&loaded&&performance.now()-t0>=SHOW)hide();
+  }
+  window.addEventListener('load',()=>{loaded=true;maybeHide();});
+  setTimeout(maybeHide,SHOW);
+  setTimeout(hide,CAP);
 })();
 </script>
 
@@ -554,18 +560,29 @@ document.addEventListener('DOMContentLoaded',()=>{
       const heading=document.createElement('div');
       heading.className='min-w-0';
 
+      const metaWrap=document.createElement('div');
+      metaWrap.className='flex items-center gap-2';
+      const blueDot=document.createElement('span');
+      blueDot.className='w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)] shrink-0';
+      blueDot.setAttribute('aria-hidden','true');
       const meta=document.createElement('p');
       meta.className='text-red-500 text-[10px] font-bold tracking-[0.15em] uppercase';
-      meta.textContent=`TELEGRAM BOT · ${event.format||'PHYSICAL'} · ${event.event_date||'DATE TO BE ANNOUNCED'}`;
+      meta.textContent=`${event.format||'PHYSICAL'} · ${event.event_date||'DATE TO BE ANNOUNCED'}`;
+      metaWrap.append(blueDot,meta);
 
       const title=document.createElement('h4');
       title.className='font-bold text-white mt-1';
       title.textContent=event.title||'Hackathon Update';
-      heading.append(meta,title);
+      heading.append(metaWrap,title);
 
       const badge=document.createElement('span');
-      badge.className='text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap';
-      badge.textContent='BOT APPROVED';
+      badge.className='shrink-0 pt-1';
+      badge.title='Verified update';
+      const greenDot=document.createElement('span');
+      greenDot.className='block w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] animate-pulse';
+      greenDot.setAttribute('role','img');
+      greenDot.setAttribute('aria-label','Verified update');
+      badge.append(greenDot);
 
       top.append(heading,badge);
       card.appendChild(top);
