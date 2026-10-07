@@ -1,7 +1,15 @@
 const TelegramBot = require("node-telegram-bot-api");
 const db = require("./database");
 
+let botStarted = false;
+
 function startBot() {
+  // Prevent accidental double-start inside the same Node process
+  if (botStarted) {
+    console.log("⚠️ Telegram bot is already running. Skipping second start.");
+    return;
+  }
+
   const token = process.env.BOT_TOKEN;
   const adminId = String(process.env.TELEGRAM_ADMIN_ID || "");
 
@@ -10,8 +18,23 @@ function startBot() {
     return;
   }
 
+  botStarted = true;
+
+  /*
+   * STABLE TELEGRAM POLLING CONFIG
+   *
+   * interval = small delay between polling requests
+   * timeout  = Telegram long-polling timeout
+   * autoStart = start polling automatically
+   */
   const bot = new TelegramBot(token, {
-    polling: true
+    polling: {
+      interval: 1000,
+      autoStart: true,
+      params: {
+        timeout: 30
+      }
+    }
   });
 
   const pending = new Map();
@@ -173,7 +196,11 @@ function startBot() {
         `Event date: ${event.event_date || "-"}`,
         `Deadline: ${event.deadline || "-"}`,
         `Eligibility: ${event.eligibility || "-"}`,
-        `Team size: ${event.team_size ? `${event.team_size} member(s)` : "-"}`,
+        `Team size: ${
+          event.team_size
+            ? `${event.team_size} member(s)`
+            : "-"
+        }`,
         ""
       );
     }
@@ -241,6 +268,7 @@ function startBot() {
 
     // PHYSICAL ONLY
     if (
+      !event.format ||
       event.format.toLowerCase() !== "physical"
     ) {
       return bot.sendMessage(
@@ -541,7 +569,6 @@ function startBot() {
       }
 
       // STEP 8
-      // REGISTRATION LINK
       if (add.step === 8) {
 
         if (!text) {
@@ -874,24 +901,65 @@ function startBot() {
   });
 
   // ==========================================
-  // TELEGRAM ERRORS
+  // TELEGRAM POLLING ERRORS
   // ==========================================
 
   bot.on("polling_error", (error) => {
-    console.error(
-      "Telegram polling error:",
-      error.message
-    );
+    console.error("====================================");
+    console.error("❌ TELEGRAM POLLING ERROR");
+    console.error("Message:", error?.message || error);
+    console.error("Code:", error?.code || "unknown");
+    console.error("====================================");
   });
+
+  // ==========================================
+  // TELEGRAM GENERAL ERRORS
+  // ==========================================
 
   bot.on("error", (error) => {
-    console.error(
-      "Telegram bot error:",
-      error.message
-    );
+    console.error("====================================");
+    console.error("❌ TELEGRAM BOT ERROR");
+    console.error("Message:", error?.message || error);
+    console.error("Code:", error?.code || "unknown");
+    console.error("====================================");
   });
 
-  console.log("Telegram bot is running.");
+  // ==========================================
+  // PROCESS ERRORS
+  // ==========================================
+
+  process.on("unhandledRejection", (reason) => {
+    console.error("❌ UNHANDLED PROMISE REJECTION:");
+    console.error(reason);
+  });
+
+  process.on("uncaughtException", (error) => {
+    console.error("❌ UNCAUGHT EXCEPTION:");
+    console.error(error);
+  });
+
+  // ==========================================
+  // STARTUP TEST
+  // ==========================================
+
+  bot.getMe()
+    .then((me) => {
+      console.log("====================================");
+      console.log("✅ Telegram bot connected");
+      console.log(`🤖 Bot: @${me.username}`);
+      console.log(`🆔 Bot ID: ${me.id}`);
+      console.log(`👤 Admin ID: ${adminId}`);
+      console.log("📡 Polling: ACTIVE");
+      console.log("====================================");
+    })
+    .catch((error) => {
+      console.error("====================================");
+      console.error("❌ Telegram connection test failed");
+      console.error(error?.message || error);
+      console.error("====================================");
+    });
+
+  console.log("Telegram bot is starting...");
 }
 
 module.exports = startBot;
