@@ -11,8 +11,9 @@
 <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
 
 <!-- fetch the logo video with HIGH priority during parse, so its first frame
-     is ready the moment the splash paints. The 3 <video data-logo> tags below
-     all share this single download via the HTTP cache (no triple download). -->
+     is ready the moment the splash paints. One hidden master video decodes it
+     a single time; every logo on the page is a canvas painted from that one
+     video, so all logos stay perfectly in sync with zero drift. -->
 <link rel="preload" href="logo.mp4" as="video" type="video/mp4" fetchpriority="high">
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -95,9 +96,14 @@ opacity:1;transition:opacity .15s ease-out
 
 <body class="bg-black text-slate-100 font-sans antialiased selection:bg-red-600 selection:text-white min-h-screen flex flex-col justify-between overflow-x-hidden">
 
+<!-- THE one and only logo player: this single hidden video decodes logo.mp4
+     once. Every logo you see on the page (splash, navbar, hero) is a <canvas>
+     that gets painted from this video every frame, so they can never drift. -->
+<video id="logo-master" src="logo.mp4" muted loop playsinline preload="auto" disablepictureinpicture aria-hidden="true" style="position:fixed;top:0;left:0;width:4px;height:4px;opacity:0;pointer-events:none;z-index:-1;"></video>
+
 <div id="splash-screen" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center">
 <div class="flex flex-col items-center space-y-4">
-<video data-logo src="logo.mp4" autoplay loop muted playsinline preload="auto" disablepictureinpicture aria-hidden="true" class="h-36 w-36 rounded-full border-2 border-red-600/60 object-cover shadow-[0_0_50px_rgba(220,38,38,0.5)]"></video>
+<canvas data-logo-canvas data-css="144" aria-hidden="true" class="h-36 w-36 rounded-full border-2 border-red-600/60 shadow-[0_0_50px_rgba(220,38,38,0.5)]"></canvas>
 <span class="text-2xl font-extrabold tracking-widest text-white uppercase">NeNoX Forge</span>
 </div>
 </div>
@@ -107,7 +113,7 @@ opacity:1;transition:opacity .15s ease-out
 <nav class="sticky top-0 z-50 bg-black/95 border-b border-red-900/40">
 <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 <a href="./intro.html" aria-label="NeNoX Forge Home" class="flex items-center space-x-3">
-<video data-logo src="logo.mp4" autoplay loop muted playsinline preload="auto" disablepictureinpicture aria-hidden="true" class="pointer-events-none h-10 w-10 rounded-full border border-red-600/60 object-cover shadow-sm"></video>
+<canvas data-logo-canvas data-css="40" aria-hidden="true" class="pointer-events-none h-10 w-10 rounded-full border border-red-600/60 shadow-sm"></canvas>
 <span class="font-bold text-xl tracking-wider text-white">NeNoX Forge</span>
 </a>
 <a href="https://discord.gg/tYzSBzRZGE" target="_blank" rel="noopener noreferrer" class="zoom-card flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg shadow-lg shadow-indigo-600/30">
@@ -142,7 +148,7 @@ Here's the deal: When you hit a wall or face a tough technical challenge, we've 
 <div class="relative group">
 <!-- glow: opacity-only transition (the old one animated the blur filter for 1s = laggy) -->
 <div class="absolute -inset-1 bg-gradient-to-r from-red-600 to-rose-700 rounded-full blur-xl opacity-50 group-hover:opacity-80 transition-opacity duration-300 transform-gpu"></div>
-<video data-logo src="logo.mp4" autoplay loop muted playsinline preload="auto" disablepictureinpicture aria-hidden="true" class="relative h-64 w-64 sm:h-72 sm:w-72 rounded-full object-cover border-2 border-red-600/80 shadow-2xl shadow-red-900/50"></video>
+<canvas data-logo-canvas data-css="288" aria-hidden="true" class="relative h-64 w-64 sm:h-72 sm:w-72 rounded-full border-2 border-red-600/80 shadow-2xl shadow-red-900/50"></canvas>
 </div>
 </div>
 
@@ -363,10 +369,7 @@ Here's the deal: When you hit a wall or face a tough technical challenge, we've 
     hidden=true;
     splash.style.opacity='0';
     splash.style.visibility='hidden';
-    setTimeout(()=>{
-      splash.querySelectorAll('video').forEach(v=>{try{v.pause();v.removeAttribute('src');v.load();}catch(e){}});
-      splash.remove();
-    },320);
+    setTimeout(()=>splash.remove(),320);   // splash holds only a canvas; the single master video lives outside it and keeps playing
   }
   setTimeout(hide,MIN);                                   // minimum brand moment
   setTimeout(hide,MAX);                                   // hard cap, never trap
@@ -375,108 +378,57 @@ Here's the deal: When you hit a wall or face a tough technical challenge, we've 
 </script>
 
 <script>
-/* ---------- LOGO VIDEOS: one master clock + continuous sync ----------
-   All logo videos use the same file, but separate <video> elements can slowly
-   drift because each element has its own playback clock/decoder. One logo is
-   the master clock; the others continuously follow it. This keeps them aligned
-   even after several minutes, including when the video loops. */
-document.addEventListener('DOMContentLoaded',()=>{
-  const logos=[...document.querySelectorAll('video[data-logo]')];
-  if(!logos.length)return;
+/* ---------- LOGO: ONE video decoded, painted everywhere at once ----------
+   A single hidden master video (#logo-master) plays logo.mp4 exactly once.
+   Every animation frame, its current frame is drawn onto all
+   [data-logo-canvas] canvases (splash, navbar, hero). Because there is
+   literally one decoder feeding every logo spot, they are pixel-identical at
+   all times: no drift, no "some ahead, some behind", and the phone decodes the
+   file only once (which also kills the freeze-then-run stutter). */
+(function(){
+  const master=document.getElementById('logo-master');
+  if(!master)return;
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
 
-  logos.forEach(v=>{
-    v.muted=true;v.loop=true;v.playsInline=true;v.preload='auto';
-    v.setAttribute('aria-hidden','true');
-    try{v.disablePictureInPicture=true;}catch(e){}
-  });
+  /* crisp canvases: backing store sized for the display size x screen density */
+  let layers=[...document.querySelectorAll('canvas[data-logo-canvas]')].map(c=>{
+    const css=parseInt(c.dataset.css||'144',10);
+    c.width=Math.round(css*dpr);
+    c.height=Math.round(css*dpr);
+    const ctx=c.getContext('2d');
+    return ctx?{c,ctx}:null;
+  }).filter(Boolean);
 
-  let started=false;
-  let syncing=false;
-  const master=logos[0];
-
-  const playAll=()=>logos.forEach(v=>{
-    if(v.readyState>=2)v.play().catch(()=>{});
-  });
-
-  const startTogether=()=>{
-    if(started)return;
-    if(!logos.every(v=>v.readyState>=2))return;
-    started=true;
-    logos.forEach(v=>{try{v.currentTime=0;}catch(e){}});
-    requestAnimationFrame(playAll);
+  /* object-fit: cover, done in canvas */
+  const drawCover=(ctx,v,W,H)=>{
+    const vw=v.videoWidth,vh=v.videoHeight;
+    if(!vw||!vh)return;
+    const s=Math.max(W/vw,H/vh),dw=vw*s,dh=vh*s;
+    ctx.drawImage(v,(W-dw)/2,(H-dh)/2,dw,dh);
   };
 
-  logos.forEach(v=>{
-    v.addEventListener('canplay',startTogether);
-    v.addEventListener('loadeddata',startTogether);
-    v.addEventListener('error',()=>{started=true;});
-  });
-
-  setTimeout(()=>{
-    if(started)return;
-    started=true;
-    logos.forEach(v=>{try{v.currentTime=0;}catch(e){}});
-    playAll();
-  },6000);
-
-  /* Keep every logo locked to the master's playback position.
-     A small tolerance avoids unnecessary seeks, while the frequent check
-     prevents the small drift that becomes visible after several minutes. */
-  const sync=()=>{
-    if(!started||document.hidden||syncing||master.readyState<2){
-      requestAnimationFrame(sync);
-      return;
-    }
-
-    const t=master.currentTime;
-    const masterPaused=master.paused;
-
-    syncing=true;
-    logos.forEach(v=>{
-      if(v===master||v.readyState<2)return;
-
-      const drift=Math.abs(v.currentTime-t);
-      if(drift>0.08){
-        try{v.currentTime=t;}catch(e){}
-      }
-
-      if(masterPaused){
-        if(!v.paused)v.pause();
-      }else if(v.paused){
-        v.play().catch(()=>{});
-      }
-    });
-    syncing=false;
-
-    requestAnimationFrame(sync);
+  const paint=()=>{
+    if(master.readyState<2)return;                 // no frame decoded yet
+    layers=layers.filter(l=>l.c.isConnected);      // splash canvas leaves with the splash
+    for(const l of layers)drawCover(l.ctx,master,l.c.width,l.c.height);
   };
-  requestAnimationFrame(sync);
 
-  /* If one logo reaches a loop boundary slightly before another, immediately
-     force the others to the master's new position. */
-  master.addEventListener('timeupdate',()=>{
-    if(!started||document.hidden)return;
-    const t=master.currentTime;
-    logos.forEach(v=>{
-      if(v!==master&&v.readyState>=2&&Math.abs(v.currentTime-t)>0.08){
-        try{v.currentTime=t;}catch(e){}
-      }
-    });
-  });
-
-  /* Tab switch: pause together, then resume from exactly the same timestamp. */
+  master.muted=true;master.loop=true;master.playsInline=true;master.preload='auto';
+  try{master.disablePictureInPicture=true;}catch(e){}
+  const play=()=>master.play().catch(()=>{});
+  master.addEventListener('canplay',()=>{paint();if(reduced)master.pause();else play();});
+  if(master.readyState>=2){paint();if(!reduced)play();}
   document.addEventListener('visibilitychange',()=>{
-    if(document.hidden){
-      logos.forEach(v=>v.pause());
-    }else if(started&&master.readyState>=2){
-      const t=master.currentTime;
-      logos.forEach(v=>{
-        try{v.currentTime=t;}catch(e){}
-      });
-      playAll();
-    }
+    if(document.hidden)master.pause();else if(!reduced)play();
   });
-});
+
+  if(reduced)return;                               // static first frame is enough
+  (function frame(){
+    if(!document.hidden)paint();                   // first frame paints the instant data arrives
+    requestAnimationFrame(frame);
+  })();
+})();
 </script>
 
 <script>
@@ -591,7 +543,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
       const meta=document.createElement('p');
       meta.className='text-red-500 text-[10px] font-bold tracking-[0.15em] uppercase';
-      meta.innerHTML=`<span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-2 align-middle" aria-label="Telegram Bot" title="Telegram Bot"></span>${event.format||'PHYSICAL'} · ${event.event_date||'DATE TO BE ANNOUNCED'}`;
+      meta.textContent=`TELEGRAM BOT · ${event.format||'PHYSICAL'} · ${event.event_date||'DATE TO BE ANNOUNCED'}`;
 
       const title=document.createElement('h4');
       title.className='font-bold text-white mt-1';
@@ -599,9 +551,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       heading.append(meta,title);
 
       const badge=document.createElement('span');
-      badge.className='inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
-      badge.setAttribute('aria-label','Bot Approved');
-      badge.title='Bot Approved';
+      badge.className='text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap';
+      badge.textContent='BOT APPROVED';
 
       top.append(heading,badge);
       card.appendChild(top);
