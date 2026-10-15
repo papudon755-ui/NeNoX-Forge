@@ -88,17 +88,17 @@ transition:transform .45s var(--ease-in),background-color .2s ease,color .2s eas
 .zoom-card.is-active:after,.zoom-item.is-active:after{opacity:1;transition:opacity .35s ease-out}
 }
 
-/* MUSIC BUTTON: hover animation is independent of playback state, so it still
-   animates after pausing; touch targets remain comfortable on mobile. */
-.music-toggle{touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:0;min-width:44px;min-height:44px;bottom:calc(1.5rem + env(safe-area-inset-bottom, 0px));right:calc(1.5rem + env(safe-area-inset-right, 0px));cursor:pointer}
-.music-toggle:hover{color:#fff;background:rgba(127,29,29,.95);transform:scale(1.08)}
-.music-toggle:active{transform:scale(.96)}
-.music-icon{display:inline-block;transform-origin:center;transition:transform .25s ease,color .2s ease}
-@media (hover:hover) and (pointer:fine){.music-toggle:hover .music-icon{transform:rotate(18deg) scale(1.08)}}
-.music-toggle.is-playing .music-icon{color:#f87171;animation:music-disc-spin 3s linear infinite}
-.music-toggle.is-playing:hover .music-icon{animation-duration:1.5s}
-@keyframes music-disc-spin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.music-icon,.music-toggle{transition:none}.music-toggle.is-playing .music-icon{animation:none}}
+/* MUSIC BUTTON: keep the music-note glyph visible; animate the note itself
+   while audio plays. Hover remains separate, and clicking does not squash the button. */
+.music-toggle{touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:0;min-width:44px;min-height:44px;bottom:calc(1.5rem + env(safe-area-inset-bottom, 0px));right:calc(1.5rem + env(safe-area-inset-right, 0px));cursor:pointer;transition:color .2s ease,background-color .2s ease,border-color .2s ease,box-shadow .2s ease}
+.music-toggle:hover{color:#fff;background:rgba(127,29,29,.95);border-color:rgba(248,113,113,.85)}
+.music-toggle:active{transform:none;filter:brightness(1.12)}
+.music-icon{display:inline-block;transform-origin:50% 70%;transition:color .2s ease;will-change:transform}
+@media (hover:hover) and (pointer:fine){.music-toggle:hover .music-icon:not(.is-spinning){animation:music-note-hover .45s ease-in-out}}
+.music-toggle.is-playing .music-icon{color:#f87171;animation:music-note-dance .72s ease-in-out infinite}
+@keyframes music-note-dance{0%,100%{transform:rotate(-22deg) translateY(0) scale(1)}25%{transform:rotate(0deg) translateY(-2px) scale(1.12)}50%{transform:rotate(22deg) translateY(0) scale(1.04)}75%{transform:rotate(0deg) translateY(-1px) scale(1.12)}}
+@keyframes music-note-hover{0%,100%{transform:rotate(0) scale(1)}45%{transform:rotate(24deg) scale(1.18)}75%{transform:rotate(-12deg) scale(1.08)}}
+@media (prefers-reduced-motion:reduce){.music-icon,.music-toggle{transition:none}.music-toggle.is-playing .music-icon,.music-toggle:hover .music-icon{animation:none}}
 @media(max-width:480px){.music-toggle{width:46px;height:46px;bottom:calc(1rem + env(safe-area-inset-bottom, 0px));right:calc(1rem + env(safe-area-inset-right, 0px))}}
 
 /* CLICK / TAP: reacts on the first frame */
@@ -449,8 +449,9 @@ document.addEventListener('DOMContentLoaded',()=>{
       btn.setAttribute('aria-pressed',String(playing));
       btn.setAttribute('aria-label',playing?'Pause background music':'Play background music');
       btn.title=playing?'Pause background music':'Play background music';
-      icon.classList.toggle('fa-compact-disc',playing);
-      icon.classList.toggle('fa-music',!playing);
+      // Keep the music-note icon in both states; CSS animates the note itself.
+      icon.classList.remove('fa-compact-disc');
+      icon.classList.add('fa-music');
     };
 
     // Use the media element's real state, not a separate boolean that can drift.
