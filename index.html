@@ -786,8 +786,21 @@ document.addEventListener('DOMContentLoaded',()=>{
         signal: controller.signal
       });
       if (!response.ok) throw new Error('Projects API returned HTTP ' + response.status);
-      const projects = await response.json();
-      if (!Array.isArray(projects)) throw new Error('Unexpected projects API response');
+      const payload = await response.json();
+
+      // Support both common FastAPI response shapes:
+      // [ {...}, {...} ] OR { "projects": [ {...}, {...} ] }.
+      // Also tolerate an optional { "data": [...] } wrapper.
+      const projects = Array.isArray(payload) ? payload
+        : Array.isArray(payload?.projects) ? payload.projects
+        : Array.isArray(payload?.data) ? payload.data
+        : Array.isArray(payload?.items) ? payload.items
+        : null;
+
+      if (!projects) {
+        console.error('Unexpected projects API response shape:', payload);
+        throw new Error('Unexpected projects API response');
+      }
       render(projects);
       try { localStorage.setItem(CACHE_KEY, JSON.stringify(projects)); } catch (_) {}
       const note = document.getElementById('projects-refresh-note');
